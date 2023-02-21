@@ -29,4 +29,8 @@ object Constant {
     const val BEARER = "Bearer"
     const val TEXT_PLAIN = "text/plain"
     const val TEXT_HTML = "text/html"
+
+    const val DEFAULT_NEW_CONVERSATION_DISPLAY_TEXT = "+ New chat"
+
+    const val CONVERSATION_LIST_FETCH_COUNT = 100 // max 100
 }

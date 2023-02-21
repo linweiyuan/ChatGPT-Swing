@@ -21,8 +21,9 @@ class ChatWorker(
     private val chatPane: JTextPane
 ) : SwingWorker<Void, String>() {
 
-    private val content = contentField.text.trim()
     override fun doInBackground(): Void? {
+        val content = contentField.text.trim()
+
         chatPane.contentType = Constant.TEXT_PLAIN
         progressBar.isVisible = true
         contentField.parent.isVisible = false
@@ -30,12 +31,7 @@ class ChatWorker(
         chatPane.border = BorderFactory.createTitledBorder(content)
         chatPane.text = ""
 
-        val connection = Jsoup.newSession().useDefault().headers(
-            mapOf(
-                Constant.CONTENT_TYPE to Constant.APPLICATION_JSON,
-                Constant.AUTHORIZATION to "${Constant.BEARER} $accessToken",
-            )
-        )
+        val connection = Jsoup.newSession().useDefault(accessToken)
 
         val chatRequest = ChatRequest(
             parentMessageId = UUID.randomUUID(),

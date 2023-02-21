@@ -1,6 +1,6 @@
 package com.linweiyuan.chatgptswing.extensions
 
-import com.linweiyuan.chatgptswing.misc.SingletonUtil
+import com.linweiyuan.chatgptswing.util.SingletonUtil
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 

@@ -1,4 +1,4 @@
-package com.linweiyuan.chatgptswing.misc
+package com.linweiyuan.chatgptswing.util
 
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
