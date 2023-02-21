@@ -20,4 +20,13 @@ object Constant {
 
     const val HTTP_OK = 200
     const val HTTP_BAD_REQUEST = 400
+    const val HTTP_TOO_MANY_REQUESTS = 429
+    const val HTTP_INTERNAL_SERVER_ERROR = 500
+
+    const val CONTENT_TYPE = "Content-Type"
+    const val APPLICATION_JSON = "application/json"
+    const val AUTHORIZATION = "Authorization"
+    const val BEARER = "Bearer"
+    const val TEXT_PLAIN = "text/plain"
+    const val TEXT_HTML = "text/html"
 }

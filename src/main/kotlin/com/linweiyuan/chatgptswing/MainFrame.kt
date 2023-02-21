@@ -5,6 +5,7 @@ import com.linweiyuan.chatgptswing.dataclass.AuthSession
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.worker.ChatWorker
 import com.linweiyuan.chatgptswing.worker.LoginWorker
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -81,25 +82,43 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
     }
 
     private fun initMainFrame() {
+        val json = File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).readText()
+        val accessToken = JSON.parseObject(json, AuthSession::class.java).accessToken
+
         val gridBagConstraints = GridBagConstraints().apply {
             fill = GridBagConstraints.BOTH
         }
 
-        val contentField = JTextField()
-        add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
+        val progressBar = JProgressBar().apply {
+            isIndeterminate = true
+            isVisible = false
+        }
+        add(progressBar, gridBagConstraints.apply {
             gridx = 0
             gridy = 0
+            gridwidth = 1
             weightx = 1.0
         })
 
         val chatPane = JTextPane().apply {
             isEditable = false
         }
-        add(JScrollPane(chatPane).apply {
-            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-        }, gridBagConstraints.apply {
+
+        val contentField = JTextField().apply {
+            addActionListener {
+                ChatWorker(accessToken, progressBar, this, chatPane).execute()
+            }
+        }
+        add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
             gridx = 0
             gridy = 1
+        })
+
+        add(JScrollPane(chatPane).apply {
+            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        }, gridBagConstraints.apply {
+            gridx = 0
+            gridy = 2
             weighty = 1.0
         })
 
