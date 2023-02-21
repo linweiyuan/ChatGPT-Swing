@@ -6,6 +6,7 @@ import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.worker.LoginWorker
+import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.io.File
@@ -16,6 +17,8 @@ import javax.swing.*
 class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
     init {
+        layout = GridBagLayout()
+
         if (shouldLogin) {
             initLoginFrame()
         } else {
@@ -29,8 +32,6 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
     }
 
     private fun initLoginFrame() {
-        layout = GridBagLayout()
-
         val gridBagConstraints = GridBagConstraints().apply {
             fill = GridBagConstraints.HORIZONTAL
         }
@@ -80,8 +81,29 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
     }
 
     private fun initMainFrame() {
-        add(JLabel("Hello World"))
-        pack()
+        val gridBagConstraints = GridBagConstraints().apply {
+            fill = GridBagConstraints.BOTH
+        }
+
+        val contentField = JTextField()
+        add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
+            gridx = 0
+            gridy = 0
+            weightx = 1.0
+        })
+
+        val chatPane = JTextPane().apply {
+            isEditable = false
+        }
+        add(JScrollPane(chatPane).apply {
+            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        }, gridBagConstraints.apply {
+            gridx = 0
+            gridy = 1
+            weighty = 1.0
+        })
+
+        size = Dimension(888, 555)
     }
 }
 

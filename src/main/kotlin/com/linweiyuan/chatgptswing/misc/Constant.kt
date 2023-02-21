@@ -9,6 +9,7 @@ object Constant {
     const val USERNAME = "Email"
     const val PASSWORD = "Password"
     const val LOGIN = "Login"
+    const val CONTENT = "Content"
 
     const val MAGIC_NUMBER = 1
 
