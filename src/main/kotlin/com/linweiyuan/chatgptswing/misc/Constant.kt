@@ -22,6 +22,7 @@ object Constant {
     const val GITHUB_REPO_URL = "https://github.com/linweiyuan/ChatGPT-Swing"
     const val ABOUT_INTO = "GitHub: $GITHUB_REPO_URL (click to open)"
     const val MORE = "More"
+    const val RENAME = "Rename"
 
     const val MAGIC_NUMBER = 1
 

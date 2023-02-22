@@ -170,6 +170,34 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
             }
         }
 
+        val conversationListPopupMenu = JPopupMenu()
+            .apply {
+                add(JMenuItem(Constant.RENAME).apply {
+                    addActionListener {
+                        val title = JOptionPane.showInputDialog("Rename to new title.")
+                        if (title.isNullOrBlank()) {
+                            "Please input new title.".warn()
+                            return@addActionListener
+                        }
+
+                        val conversationId = IdUtil.getConversationId()
+                        if (conversationId.isBlank()) {
+                            "This conversation does not support rename.".warn()
+                            return@addActionListener
+                        }
+
+                        RenameConversationTitleWorker(
+                            authSession.accessToken,
+                            conversationId,
+                            title,
+                            progressBar,
+                            conversationList,
+                        ).execute()
+                    }
+                })
+            }
+        conversationList.componentPopupMenu = conversationListPopupMenu
+
         val leftPanel = JPanel().apply {
             layout = BorderLayout()
 
