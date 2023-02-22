@@ -136,6 +136,8 @@ class LoginWorker(
         progressBar.isIndeterminate = !progressBar.isIndeterminate
         usernameField.isEditable = !usernameField.isEditable
         passwordField.isEditable = !passwordField.isEditable
+        proxyHostField.isEditable = !proxyHostField.isEditable
+        proxyPortField.isEditable = !proxyPortField.isEditable
         loginButton.isEnabled = !loginButton.isEnabled
     }
 
