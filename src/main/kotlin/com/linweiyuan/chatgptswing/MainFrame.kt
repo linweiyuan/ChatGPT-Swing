@@ -221,7 +221,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
         add(progressBar, BorderLayout.NORTH)
         add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel))
 
-        size = Dimension(1024, 789)
+        size = Dimension(1366, 768)
 
         GetConversationListWorker(accessToken, progressBar, conversationList).execute()
     }
