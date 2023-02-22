@@ -24,6 +24,7 @@ object Constant {
     const val MORE = "More"
     const val RENAME = "Rename"
     const val DELETE = "Delete"
+    const val CLEAR = "Clear"
 
     const val MAGIC_NUMBER = 1
 
