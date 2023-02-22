@@ -35,10 +35,11 @@ class RenameConversationTitleWorker(
                     put("title", title)
                 }).toRequestBody(Constant.APPLICATION_JSON.toMediaType()))
                 .build()
-            val response = client.newCall(request).execute()
-            if (!response.isSuccessful) {
-                "Failed to rename conversation.".warn()
-                return null
+            client.newCall(request).execute().use {
+                if (!it.isSuccessful) {
+                    "Failed to rename conversation.".warn()
+                    return null
+                }
             }
 
         } catch (e: Exception) {

@@ -34,10 +34,11 @@ class ClearAllConversationsWorker(
                     put("is_visible", false)
                 }).toRequestBody(Constant.APPLICATION_JSON.toMediaType()))
                 .build()
-            val response = client.newCall(request).execute()
-            if (!response.isSuccessful) {
-                "Failed to delete conversation.".warn()
-                return null
+            client.newCall(request).execute().use {
+                if (!it.isSuccessful) {
+                    "Failed to clear conversations.".warn()
+                    return null
+                }
             }
 
         } catch (e: Exception) {
