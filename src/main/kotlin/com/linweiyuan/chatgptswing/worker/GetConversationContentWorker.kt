@@ -9,6 +9,7 @@ import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
 import java.awt.Color
 import javax.swing.*
@@ -37,6 +38,7 @@ class GetConversationContentWorker(
         val chatContentResponse = JSON.parseObject(response.body(), ConversationContentResponse::class.java)
         val mapping = chatContentResponse.mapping
         val currentNode = chatContentResponse.currentNode
+        IdUtil.setParentMessageId(currentNode)
         handleConversationDetail(mapping, currentNode)
 
         return null

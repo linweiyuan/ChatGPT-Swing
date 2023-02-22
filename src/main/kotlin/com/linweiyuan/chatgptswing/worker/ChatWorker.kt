@@ -6,6 +6,7 @@ import com.linweiyuan.chatgptswing.extensions.toHtml
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.util.*
@@ -17,6 +18,9 @@ class ChatWorker(
     private val contentField: JTextField,
     private val chatPane: JTextPane
 ) : SwingWorker<Void, String>() {
+
+    private var conversationId = IdUtil.getConversationId()
+    private var parentMessageId = IdUtil.getParentMessageId()
 
     override fun doInBackground(): Void? {
         val content = contentField.text.trim()
@@ -31,15 +35,20 @@ class ChatWorker(
         val connection = Jsoup.newSession().useDefault(accessToken)
 
         val chatRequest = ChatRequest(
-            parentMessageId = UUID.randomUUID().toString(),
             messages = listOf(
                 Message(
                     id = UUID.randomUUID().toString(),
                     author = Author(Constant.ROLE_USER),
                     content = Content(parts = mutableListOf(content))
                 )
-            )
+            ),
         )
+        if (conversationId.isNotBlank()) {
+            chatRequest.conversationId = conversationId
+        }
+        if (parentMessageId.isNotBlank()) {
+            chatRequest.parentMessageId = parentMessageId
+        }
 
         val response = connection.url("https://apps.openai.com/api/conversation")
             .method(Connection.Method.POST)
@@ -69,10 +78,17 @@ class ChatWorker(
                 }
 
                 val chatResponse = JSON.parseObject(line.substring(6), ChatResponse::class.java) // remove "data: "
+                if (conversationId.isBlank()) {
+                    conversationId = chatResponse.conversationId
+                }
+                if (parentMessageId.isBlank()) {
+                    IdUtil.setParentMessageId(chatResponse.message.id)
+                }
                 val part = chatResponse.message.content.parts[0]
                 if (part.isNotBlank()) {
                     publish(chatResponse.message.content.parts[0])
                 }
+
                 line = it.readLine()
             }
         }

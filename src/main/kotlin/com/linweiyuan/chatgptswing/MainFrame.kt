@@ -7,6 +7,7 @@ import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.IdUtil
 import com.linweiyuan.chatgptswing.worker.ChatWorker
 import com.linweiyuan.chatgptswing.worker.GetConversationContentWorker
 import com.linweiyuan.chatgptswing.worker.GetConversationListWorker
@@ -104,10 +105,13 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                 if (!it.valueIsAdjusting) {
                     val conversationId = conversations[this.selectedIndex].id
                     if (conversationId.isBlank()) {
+                        chatPane.border = null
                         chatPane.text = ""
+                        IdUtil.clearIds()
                         return@addListSelectionListener
                     }
 
+                    IdUtil.setConversationId(conversationId)
                     GetConversationContentWorker(
                         accessToken,
                         conversations[this.selectedIndex],

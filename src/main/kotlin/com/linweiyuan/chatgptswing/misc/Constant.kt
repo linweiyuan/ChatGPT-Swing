@@ -1,6 +1,7 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.linweiyuan.chatgptswing.misc
 
-@Suppress("SpellCheckingInspection")
 object Constant {
     const val TITLE = "ChatGPT-Swing"
 

@@ -1,13 +1,18 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.linweiyuan.chatgptswing.dataclass
 
 import com.alibaba.fastjson2.annotation.JSONField
+import java.util.*
 
 data class ChatRequest(
     val action: String = "next",
     val model: String = "text-davinci-002-render-sha",
     @JSONField(name = "parent_message_id")
-    val parentMessageId: String,
+    var parentMessageId: String = UUID.randomUUID().toString(),
     val messages: List<Message>,
+    @JSONField(name = "conversation_id")
+    var conversationId: String? = null,
 )
 
 data class Message(
