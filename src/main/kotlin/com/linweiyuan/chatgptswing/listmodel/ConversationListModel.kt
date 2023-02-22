@@ -14,7 +14,7 @@ class ConversationListModel(private val conversations: MutableList<Conversation>
         conversations.add(conversation)
     }
 
-    fun done() {
+    fun update() {
         fireContentsChanged(this, 0, size - 1)
     }
 

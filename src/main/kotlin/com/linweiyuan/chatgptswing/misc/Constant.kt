@@ -37,4 +37,5 @@ object Constant {
     const val CONVERSATION_LIST_FETCH_COUNT = 100 // max 100
 
     const val ROLE_USER = "user"
+    const val MODEL_NAME = "text-davinci-002-render-sha"
 }

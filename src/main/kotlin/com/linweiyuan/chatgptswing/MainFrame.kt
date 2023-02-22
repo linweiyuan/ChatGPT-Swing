@@ -114,7 +114,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                     IdUtil.setConversationId(conversationId)
                     GetConversationContentWorker(
                         accessToken,
-                        conversations[this.selectedIndex],
+                        conversations[this.selectedIndex].id,
                         progressBar,
                         chatPane,
                         this
@@ -148,7 +148,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
             val contentField = JTextField().apply {
                 addActionListener {
-                    ChatWorker(accessToken, progressBar, this, chatPane).execute()
+                    ChatWorker(accessToken, progressBar, this, chatPane, conversationList).execute()
                 }
             }
             add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {

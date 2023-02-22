@@ -5,6 +5,7 @@ import com.linweiyuan.chatgptswing.dataclass.*
 import com.linweiyuan.chatgptswing.extensions.toHtml
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
+import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
@@ -16,13 +17,14 @@ class ChatWorker(
     private val accessToken: String,
     private val progressBar: JProgressBar,
     private val contentField: JTextField,
-    private val chatPane: JTextPane
-) : SwingWorker<Void, String>() {
+    private val chatPane: JTextPane,
+    private val conversationList: JList<Conversation>,
+) : SwingWorker<Conversation, String>() {
 
     private var conversationId = IdUtil.getConversationId()
     private var parentMessageId = IdUtil.getParentMessageId()
 
-    override fun doInBackground(): Void? {
+    override fun doInBackground(): Conversation? {
         val content = contentField.text.trim()
 
         chatPane.contentType = Constant.TEXT_PLAIN
@@ -34,10 +36,11 @@ class ChatWorker(
 
         val connection = Jsoup.newSession().useDefault(accessToken)
 
+        val messageId = UUID.randomUUID().toString()
         val chatRequest = ChatRequest(
             messages = listOf(
                 Message(
-                    id = UUID.randomUUID().toString(),
+                    id = messageId,
                     author = Author(Constant.ROLE_USER),
                     content = Content(parts = mutableListOf(content))
                 )
@@ -50,7 +53,7 @@ class ChatWorker(
             chatRequest.parentMessageId = parentMessageId
         }
 
-        val response = connection.url("https://apps.openai.com/api/conversation")
+        val response = connection.newRequest().url("https://apps.openai.com/api/conversation")
             .method(Connection.Method.POST)
             .requestBody(JSON.toJSONString(chatRequest))
             .execute()
@@ -93,6 +96,17 @@ class ChatWorker(
             }
         }
 
+        if (IdUtil.getConversationId().isBlank()) {
+            val json = connection.newRequest()
+                .url(String.format("https://apps.openai.com/api/conversation/gen_title/%s", conversationId))
+                .requestBody(JSON.toJSONString(GenerateTitleRequest(messageId)))
+                .post()
+                .text()
+            IdUtil.setConversationId(conversationId)
+            val generateTitleResponse = JSON.parseObject(json, GenerateTitleResponse::class.java)
+            return Conversation(conversationId, generateTitleResponse.title)
+        }
+
         return null
     }
 
@@ -108,6 +122,22 @@ class ChatWorker(
         val html = chatPane.text.toHtml()
         chatPane.contentType = Constant.TEXT_HTML // this line will clear all contents
         chatPane.text = html
+
+        val conversation = get()
+        if (conversation != null) {
+            val conversationListModel = ((conversationList.model) as ConversationListModel)
+            conversationListModel.addItem(conversation)
+            conversationListModel.update()
+        }
+        SwingUtilities.invokeLater {
+            GetConversationContentWorker(
+                accessToken,
+                IdUtil.getConversationId(),
+                progressBar,
+                chatPane,
+                conversationList
+            ).execute()
+        }
     }
 
 }

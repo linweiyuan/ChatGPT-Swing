@@ -12,12 +12,15 @@ import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
 import java.awt.Color
-import javax.swing.*
+import javax.swing.JList
+import javax.swing.JProgressBar
+import javax.swing.JTextPane
+import javax.swing.SwingWorker
 import javax.swing.text.StyleConstants
 
 class GetConversationContentWorker(
     private val accessToken: String,
-    private val conversation: Conversation,
+    private val conversationId: String,
     private val progressBar: JProgressBar,
     private val chatPane: JTextPane,
     private val conversationList: JList<Conversation>
@@ -25,11 +28,13 @@ class GetConversationContentWorker(
 
     override fun doInBackground(): Void? {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
-        chatPane.border = BorderFactory.createTitledBorder(conversation.title)
         chatPane.text = ""
 
         val connection = Jsoup.newSession().useDefault(accessToken)
-        val response = connection.url("https://apps.openai.com/api/conversation/${conversation.id}").execute()
+
+        val response = connection.newRequest()
+            .url("https://apps.openai.com/api/conversation/$conversationId")
+            .execute()
         if (response.statusCode() != Constant.HTTP_OK) {
             "Failed to get conversation content.".warn()
             return null
@@ -74,9 +79,8 @@ class GetConversationContentWorker(
     override fun done() {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
 
-        val conversationListModel = conversationList.model as ConversationListModel
-        val indexByConversationId = conversationListModel.getIndexByConversationId(conversation.id)
-        conversationList.selectedIndex = indexByConversationId
+        conversationList.selectedIndex = (conversationList.model as ConversationListModel)
+            .getIndexByConversationId(conversationId)
     }
 
 }

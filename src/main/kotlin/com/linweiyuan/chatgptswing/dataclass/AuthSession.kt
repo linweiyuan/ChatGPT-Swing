@@ -3,7 +3,7 @@ package com.linweiyuan.chatgptswing.dataclass
 data class AuthSession(
     val user: User,
     val expires: String,
-    val accessToken: String
+    val accessToken: String,
 )
 
 data class User(

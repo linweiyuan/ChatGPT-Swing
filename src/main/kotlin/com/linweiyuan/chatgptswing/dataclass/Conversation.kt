@@ -1,10 +1,11 @@
 package com.linweiyuan.chatgptswing.dataclass
 
 import com.alibaba.fastjson2.annotation.JSONField
+import com.linweiyuan.chatgptswing.misc.Constant
 
 data class Conversation(
     val id: String,
-    val title: String
+    val title: String,
 ) {
     override fun toString() = title
 }
@@ -13,14 +14,14 @@ data class ConversationListResponse(
     val items: List<Conversation>,
     val total: Int,
     val limit: Int,
-    val offset: Int
+    val offset: Int,
 )
 
 data class ConversationContentResponse(
     @JSONField(name = "current_node")
     val currentNode: String,
     val mapping: Map<String, ConversationDetail>,
-    val title: String
+    val title: String,
 )
 
 data class ConversationDetail(
@@ -28,4 +29,14 @@ data class ConversationDetail(
     val message: Message?,
     val parent: String?,
     val children: List<String>,
+)
+
+data class GenerateTitleRequest(
+    @JSONField(name = "message_id")
+    val messageId: String,
+    val model: String = Constant.MODEL_NAME,
+)
+
+data class GenerateTitleResponse(
+    val title: String,
 )
