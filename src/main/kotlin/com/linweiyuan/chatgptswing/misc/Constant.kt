@@ -17,6 +17,7 @@ object Constant {
     const val LOGIN = "Login"
     const val CONTENT = "Content"
     const val REFRESH = "Refresh"
+    const val TTS = "TTS"
 
     const val MAGIC_NUMBER = 1
 
@@ -49,6 +50,5 @@ object Constant {
     const val DIV_BACKGROUND_COLOR_PREFIX_USER = "<div style='background-color: #343541; color: F7F7F8'>"
     const val DIV_POSTFIX = "</div>"
     const val DIV_BACKGROUND_COLOR_PREFIX_ASSISTANT = "<div style='background-color: #F7F7CB; color: #374151'>"
-
     const val HTML_NEW_LINE = "<br />"
 }

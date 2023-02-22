@@ -6,7 +6,7 @@
 
     <artifactId>ChatGPT-Swing</artifactId>
     <groupId>com.linweiyuan</groupId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>ChatGPT-Swing</name>
@@ -17,9 +17,10 @@
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
 
         <kotlin.version>1.8.0</kotlin.version>
-        <jsoup.version>1.15.3</jsoup.version>
-        <fastjson2.version>2.0.23</fastjson2.version>
-        <commonmark.version>0.20.0</commonmark.version>
+        <jsoup.version>1.15.4</jsoup.version>
+        <fastjson2.version>2.0.24</fastjson2.version>
+        <commonmark.version>0.21.0</commonmark.version>
+        <jlayer.version>1.0.1.4</jlayer.version>
     </properties>
 
     <dependencies>
@@ -50,6 +51,12 @@
             <groupId>org.commonmark</groupId>
             <artifactId>commonmark</artifactId>
             <version>${commonmark.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>jlayer</artifactId>
+            <version>${jlayer.version}</version>
         </dependency>
     </dependencies>
 

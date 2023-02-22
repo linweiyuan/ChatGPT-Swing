@@ -8,10 +8,7 @@ import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
-import com.linweiyuan.chatgptswing.worker.ChatWorker
-import com.linweiyuan.chatgptswing.worker.GetConversationContentWorker
-import com.linweiyuan.chatgptswing.worker.GetConversationListWorker
-import com.linweiyuan.chatgptswing.worker.LoginWorker
+import com.linweiyuan.chatgptswing.worker.*
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -213,6 +210,23 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                 gridx = 0
                 gridy = 1
                 weighty = 1.0
+            })
+
+            val ttsButton = JButton(Constant.TTS).apply {
+                addActionListener {
+                    val text = chatPane.selectedText
+                    if (text.isBlank()) {
+                        "Please select some texts first.".warn()
+                        return@addActionListener
+                    }
+
+                    TTSWorker(progressBar, text, this).execute()
+                }
+            }
+            add(ttsButton, gridBagConstraints.apply {
+                gridx = 0
+                gridy = 2
+                weighty = -1.0
             })
         }
 
