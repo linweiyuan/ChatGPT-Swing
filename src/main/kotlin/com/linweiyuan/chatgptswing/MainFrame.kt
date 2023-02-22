@@ -138,7 +138,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
         layout = BorderLayout()
 
         val json = File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).readText()
-        val accessToken = JSON.parseObject(json, AuthSession::class.java).accessToken
+        val authSession = JSON.parseObject(json, AuthSession::class.java)
 
         val progressBar = JProgressBar()
 
@@ -164,7 +164,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
                     IdUtil.setConversationId(conversationId)
                     GetConversationContentWorker(
-                        accessToken,
+                        authSession.accessToken,
                         conversations[this.selectedIndex].id,
                         progressBar,
                         chatPane,
@@ -183,11 +183,10 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
             val refreshButton = JButton(Constant.REFRESH).apply {
                 addActionListener {
-                    GetConversationListWorker(accessToken, progressBar, conversationList).execute()
+                    GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
                 }
             }
             add(refreshButton, BorderLayout.SOUTH)
-
         }
 
         val rightPanel = JPanel().apply {
@@ -199,7 +198,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
             val contentField = JTextField().apply {
                 addActionListener {
-                    ChatWorker(accessToken, progressBar, this, chatPane, conversationList).execute()
+                    ChatWorker(authSession.accessToken, progressBar, this, chatPane, conversationList).execute()
                 }
             }
             add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
@@ -223,7 +222,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
         size = Dimension(1366, 768)
 
-        GetConversationListWorker(accessToken, progressBar, conversationList).execute()
+        GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
     }
 }
 
