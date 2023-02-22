@@ -43,4 +43,10 @@ object Constant {
 
     const val ROLE_USER = "user"
     const val MODEL_NAME = "text-davinci-002-render-sha"
+
+    const val DIV_BACKGROUND_COLOR_PREFIX_USER = "<div style='background-color: #343541; color: F7F7F8'>"
+    const val DIV_POSTFIX = "</div>"
+    const val DIV_BACKGROUND_COLOR_PREFIX_ASSISTANT = "<div style='background-color: #F7F7CB; color: #374151'>"
+
+    const val HTML_NEW_LINE = "<br />"
 }

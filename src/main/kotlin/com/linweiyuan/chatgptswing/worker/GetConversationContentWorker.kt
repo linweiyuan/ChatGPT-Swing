@@ -5,18 +5,17 @@ import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.ConversationContentResponse
 import com.linweiyuan.chatgptswing.dataclass.ConversationDetail
 import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.extensions.toHtml
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
-import java.awt.Color
 import javax.swing.JList
 import javax.swing.JProgressBar
 import javax.swing.JTextPane
 import javax.swing.SwingWorker
-import javax.swing.text.StyleConstants
 
 class GetConversationContentWorker(
     private val accessToken: String,
@@ -25,6 +24,8 @@ class GetConversationContentWorker(
     private val chatPane: JTextPane,
     private val conversationList: JList<Conversation>
 ) : SwingWorker<Void, Message>() {
+
+    private val contentBuilder = StringBuilder()
 
     override fun doInBackground(): Void? {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
@@ -63,16 +64,15 @@ class GetConversationContentWorker(
     }
 
     override fun process(chunks: MutableList<Message>) {
-        val doc = chatPane.styledDocument
-        val style = chatPane.addStyle("", null)
-        chunks.reversed().forEach {
+        chunks.forEach {
+            val content = it.content.parts[0]
             if (it.author.role == Constant.ROLE_USER) {
-                StyleConstants.setForeground(style, Color.WHITE)
-                doc.insertString(0, it.content.parts[0] + "\n\n", style)
+                contentBuilder.append(Constant.DIV_BACKGROUND_COLOR_PREFIX_USER)
             } else {
-                StyleConstants.setForeground(style, Color.GREEN)
-                doc.insertString(0, it.content.parts[0] + "\n\n", style)
+                contentBuilder.append(Constant.DIV_BACKGROUND_COLOR_PREFIX_ASSISTANT)
             }
+            contentBuilder.append(content).append(Constant.DIV_POSTFIX)
+            contentBuilder.append(Constant.HTML_NEW_LINE)
         }
     }
 
@@ -81,6 +81,10 @@ class GetConversationContentWorker(
 
         conversationList.selectedIndex = (conversationList.model as ConversationListModel)
             .getIndexByConversationId(conversationId)
+
+        val html = contentBuilder.toString().toHtml()
+        chatPane.contentType = Constant.TEXT_HTML
+        chatPane.text = html
     }
 
 }
