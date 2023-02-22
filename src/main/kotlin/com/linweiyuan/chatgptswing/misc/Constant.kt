@@ -10,6 +10,7 @@ object Constant {
     const val PASSWORD = "Password"
     const val LOGIN = "Login"
     const val CONTENT = "Content"
+    const val REFRESH = "Refresh"
 
     const val MAGIC_NUMBER = 1
 
@@ -33,4 +34,6 @@ object Constant {
     const val DEFAULT_NEW_CONVERSATION_DISPLAY_TEXT = "+ New chat"
 
     const val CONVERSATION_LIST_FETCH_COUNT = 100 // max 100
+
+    const val ROLE_USER = "user"
 }

@@ -8,8 +8,10 @@ import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.worker.ChatWorker
+import com.linweiyuan.chatgptswing.worker.GetConversationContentWorker
 import com.linweiyuan.chatgptswing.worker.GetConversationListWorker
 import com.linweiyuan.chatgptswing.worker.LoginWorker
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -21,8 +23,6 @@ import javax.swing.*
 class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
     init {
-        layout = GridBagLayout()
-
         if (shouldLogin) {
             initLoginFrame()
         } else {
@@ -36,6 +36,8 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
     }
 
     private fun initLoginFrame() {
+        layout = GridBagLayout()
+
         val gridBagConstraints = GridBagConstraints().apply {
             fill = GridBagConstraints.HORIZONTAL
         }
@@ -55,10 +57,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
             gridwidth = 1
         })
 
-        val progressBar = JProgressBar().apply {
-            isIndeterminate = true
-            isVisible = false
-        }
+        val progressBar = JProgressBar()
         add(progressBar, gridBagConstraints.apply {
             gridx = 0
             gridy = 2
@@ -71,7 +70,6 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                     "Please input email and password first.".warn()
                     return@addActionListener
                 }
-
                 LoginWorker(progressBar, usernameField, passwordField, this, this@MainFrame).execute()
             }
         }
@@ -85,65 +83,92 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
     }
 
     private fun initMainFrame() {
+        layout = BorderLayout()
+
         val json = File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).readText()
         val accessToken = JSON.parseObject(json, AuthSession::class.java).accessToken
 
-        val gridBagConstraints = GridBagConstraints().apply {
-            fill = GridBagConstraints.BOTH
+        val progressBar = JProgressBar()
+
+        val chatPane = JTextPane().apply {
+            isEditable = false
         }
 
         val conversations = mutableListOf<Conversation>()
         val conversationListModel = ConversationListModel(conversations)
         conversationListModel.clear() // make sure the default new chat is displayed
         val conversationList = JList(conversationListModel).apply {
-            selectedIndex = 0
-        }
-        add(JScrollPane(conversationList).apply {
-            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-        }, gridBagConstraints.apply {
-            gridx = 0
-            gridy = 0
-            gridwidth = 1
-            gridheight = 3
-            weighty = 1.0
-        })
+            selectedIndex = 0 // default to start new chat
 
-        val progressBar = JProgressBar().apply {
-            isIndeterminate = true
-            isVisible = false
-        }
-        add(progressBar, gridBagConstraints.apply {
-            gridx = 1
-            gridy = 0
-            gridwidth = 1
-            weightx = 1.0
-        })
+            addListSelectionListener {
+                if (!it.valueIsAdjusting) {
+                    val conversationId = conversations[this.selectedIndex].id
+                    if (conversationId.isBlank()) {
+                        chatPane.text = ""
+                        return@addListSelectionListener
+                    }
 
-        val chatPane = JTextPane().apply {
-            isEditable = false
-        }
-
-        val contentField = JTextField().apply {
-            addActionListener {
-                ChatWorker(accessToken, progressBar, this, chatPane).execute()
+                    GetConversationContentWorker(
+                        accessToken,
+                        conversations[this.selectedIndex],
+                        progressBar,
+                        chatPane,
+                        this
+                    ).execute()
+                }
             }
         }
-        add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
-            gridx = 1
-            gridy = 1
-        })
 
-        add(JScrollPane(chatPane).apply {
-            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-        }, gridBagConstraints.apply {
-            gridx = 1
-            gridy = 2
-            weighty = 1.0
-        })
+        val leftPanel = JPanel().apply {
+            layout = BorderLayout()
 
-        size = Dimension(888, 555)
+            add(JScrollPane(conversationList).apply {
+                horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+            })
 
-        GetConversationListWorker(accessToken, conversationList).execute()
+            val refreshButton = JButton(Constant.REFRESH).apply {
+                addActionListener {
+                    GetConversationListWorker(accessToken, progressBar, conversationList).execute()
+                }
+            }
+            add(refreshButton, BorderLayout.SOUTH)
+
+        }
+
+        val rightPanel = JPanel().apply {
+            layout = GridBagLayout()
+
+            val gridBagConstraints = GridBagConstraints().apply {
+                fill = GridBagConstraints.BOTH
+            }
+
+            val contentField = JTextField().apply {
+                addActionListener {
+                    ChatWorker(accessToken, progressBar, this, chatPane).execute()
+                }
+            }
+            add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
+                gridx = 0
+                gridy = 0
+                weightx = 1.0
+                weighty = -1.0
+            })
+
+            add(JScrollPane(chatPane).apply {
+                horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+            }, gridBagConstraints.apply {
+                gridx = 0
+                gridy = 1
+                weighty = 1.0
+            })
+        }
+
+        add(progressBar, BorderLayout.NORTH)
+        add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel))
+
+        size = Dimension(1024, 789)
+
+        GetConversationListWorker(accessToken, progressBar, conversationList).execute()
     }
 }
 

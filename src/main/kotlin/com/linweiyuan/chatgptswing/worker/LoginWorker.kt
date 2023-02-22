@@ -106,7 +106,7 @@ class LoginWorker(
     }
 
     private fun updateUI() {
-        progressBar.isVisible = !progressBar.isVisible
+        progressBar.isIndeterminate = !progressBar.isIndeterminate
         usernameField.isEditable = !usernameField.isEditable
         passwordField.isEditable = !passwordField.isEditable
         loginButton.isEnabled = !loginButton.isEnabled

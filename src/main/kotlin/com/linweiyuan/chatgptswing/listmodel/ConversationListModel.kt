@@ -23,4 +23,13 @@ class ConversationListModel(private val conversations: MutableList<Conversation>
         conversations.add(Conversation("", Constant.DEFAULT_NEW_CONVERSATION_DISPLAY_TEXT))
     }
 
+    fun getIndexByConversationId(conversationId: String): Int {
+        conversations.forEachIndexed { index, conversation ->
+            if (conversation.id == conversationId) {
+                return index
+            }
+        }
+        return 0
+    }
+
 }

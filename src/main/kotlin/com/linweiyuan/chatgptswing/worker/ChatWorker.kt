@@ -1,10 +1,7 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.ChatRequest
-import com.linweiyuan.chatgptswing.dataclass.ChatResponse
-import com.linweiyuan.chatgptswing.dataclass.Content
-import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.dataclass.*
 import com.linweiyuan.chatgptswing.extensions.toHtml
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
@@ -25,8 +22,8 @@ class ChatWorker(
         val content = contentField.text.trim()
 
         chatPane.contentType = Constant.TEXT_PLAIN
-        progressBar.isVisible = true
-        contentField.parent.isVisible = false
+        progressBar.isIndeterminate = true
+        contentField.isEditable = !contentField.isEditable
         contentField.text = ""
         chatPane.border = BorderFactory.createTitledBorder(content)
         chatPane.text = ""
@@ -34,12 +31,12 @@ class ChatWorker(
         val connection = Jsoup.newSession().useDefault(accessToken)
 
         val chatRequest = ChatRequest(
-            parentMessageId = UUID.randomUUID(),
+            parentMessageId = UUID.randomUUID().toString(),
             messages = listOf(
                 Message(
-                    id = UUID.randomUUID(),
-                    role = "user",
-                    content = Content(parts = listOf(content))
+                    id = UUID.randomUUID().toString(),
+                    author = Author(Constant.ROLE_USER),
+                    content = Content(parts = mutableListOf(content))
                 )
             )
         )
@@ -89,8 +86,8 @@ class ChatWorker(
     }
 
     override fun done() {
-        progressBar.isVisible = false
-        contentField.parent.isVisible = true
+        progressBar.isIndeterminate = false
+        contentField.isEditable = !contentField.isEditable
 
         val html = chatPane.text.toHtml()
         chatPane.contentType = Constant.TEXT_HTML // this line will clear all contents

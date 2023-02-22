@@ -9,16 +9,20 @@ import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import org.jsoup.Jsoup
 import javax.swing.JList
+import javax.swing.JProgressBar
 import javax.swing.SwingWorker
 
 class GetConversationListWorker(
     private val accessToken: String,
+    private val progressBar: JProgressBar,
     conversationList: JList<Conversation>
 ) : SwingWorker<Void, Void>() {
 
     private val conversationListModel = conversationList.model as ConversationListModel
 
     override fun doInBackground(): Void? {
+        progressBar.isIndeterminate = !progressBar.isIndeterminate
+
         val connection = Jsoup.newSession().useDefault(accessToken)
 
         val response = connection
@@ -36,6 +40,10 @@ class GetConversationListWorker(
         conversationListModel.done()
 
         return null
+    }
+
+    override fun done() {
+        progressBar.isIndeterminate = !progressBar.isIndeterminate
     }
 
 }
