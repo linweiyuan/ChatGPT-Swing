@@ -10,6 +10,7 @@ import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
 import javax.swing.JList
@@ -30,7 +31,6 @@ class GetConversationContentWorker(
     override fun doInBackground(): Void? {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
         chatPane.border = null
-        chatPane.text = ""
 
         try {
             val connection = Jsoup.newSession().useDefault(accessToken)
@@ -90,6 +90,8 @@ class GetConversationContentWorker(
         val html = contentBuilder.toString().toHtml()
         chatPane.contentType = Constant.TEXT_HTML
         chatPane.text = html
+
+        CacheUtil.setConversation(conversationId, html)
     }
 
 }

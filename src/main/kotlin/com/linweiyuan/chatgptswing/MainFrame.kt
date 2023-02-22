@@ -7,6 +7,7 @@ import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import com.linweiyuan.chatgptswing.worker.*
 import java.awt.*
@@ -159,86 +160,101 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                     }
 
                     IdUtil.setConversationId(conversationId)
-                    GetConversationContentWorker(
-                        authSession.accessToken,
-                        conversations[this.selectedIndex].id,
-                        progressBar,
-                        chatPane,
-                        this
-                    ).execute()
+
+                    val text = CacheUtil.getConversation(conversationId)
+                    if (text.isNullOrBlank()) {
+                        GetConversationContentWorker(
+                            authSession.accessToken,
+                            conversations[selectedIndex].id,
+                            progressBar,
+                            chatPane,
+                            this
+                        ).execute()
+                    } else {
+                        chatPane.contentType = Constant.TEXT_HTML
+                        chatPane.text = text
+                    }
                 }
             }
         }
 
-        val conversationListPopupMenu = JPopupMenu().apply {
-            add(JMenuItem(Constant.REFRESH).apply {
-                addActionListener {
-                    GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
+        conversationList.addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(e: MouseEvent) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    val selectedIndex = conversationList.locationToIndex(e.point)
+                    if (selectedIndex == 0) {
+                        return
+                    }
+
+                    conversationList.selectedIndex = selectedIndex
+                    showPopupMenu(e, selectedIndex)
                 }
-            })
+            }
 
-            add(JMenuItem(Constant.RENAME).apply {
-                addActionListener {
-                    val title = JOptionPane.showInputDialog("Rename to new title.")
-                    if (title.isNullOrBlank()) {
-                        "Please input new title.".warn()
-                        return@addActionListener
-                    }
+            private fun showPopupMenu(e: MouseEvent, selectedIndex: Int) {
+                val conversationListPopupMenu = JPopupMenu().apply {
+                    add(JMenuItem(Constant.REFRESH).apply {
+                        addActionListener {
+                            @Suppress("UNCHECKED_CAST")
+                            GetConversationContentWorker(
+                                authSession.accessToken,
+                                conversations[selectedIndex].id,
+                                progressBar,
+                                chatPane,
+                                e.component as JList<Conversation>
+                            ).execute()
+                        }
+                    })
 
-                    val conversationId = IdUtil.getConversationId()
-                    if (conversationId.isBlank()) {
-                        "This conversation does not support rename.".warn()
-                        return@addActionListener
-                    }
+                    add(JMenuItem(Constant.RENAME).apply {
+                        addActionListener {
+                            val title = JOptionPane.showInputDialog("Rename to new title.")
+                            if (title.isNullOrBlank()) {
+                                "Please input new title.".warn()
+                                return@addActionListener
+                            }
 
-                    RenameConversationTitleWorker(
-                        authSession.accessToken,
-                        conversationId,
-                        title,
-                        progressBar,
-                        conversationList,
-                    ).execute()
+                            val conversationId = IdUtil.getConversationId()
+                            if (conversationId.isBlank()) {
+                                "This conversation does not support rename.".warn()
+                                return@addActionListener
+                            }
+
+                            RenameConversationTitleWorker(
+                                authSession.accessToken,
+                                conversationId,
+                                title,
+                                progressBar,
+                                conversationList,
+                            ).execute()
+                        }
+                    })
+
+                    add(JMenuItem(Constant.DELETE).apply {
+                        addActionListener {
+                            val option = JOptionPane.showConfirmDialog(null, "Do you want to delete this conversion?")
+                            if (option != JOptionPane.OK_OPTION) {
+                                return@addActionListener
+                            }
+
+                            val conversationId = IdUtil.getConversationId()
+                            if (conversationId.isBlank()) {
+                                "This conversation can not be deleted.".warn()
+                                return@addActionListener
+                            }
+
+                            DeleteConversationWorker(
+                                authSession.accessToken,
+                                conversationId,
+                                progressBar,
+                                conversationList,
+                            ).execute()
+                        }
+                    })
                 }
-            })
-
-            add(JMenuItem(Constant.DELETE).apply {
-                addActionListener {
-                    val option = JOptionPane.showConfirmDialog(null, "Do you want to delete this conversion?")
-                    if (option != JOptionPane.OK_OPTION) {
-                        return@addActionListener
-                    }
-
-                    val conversationId = IdUtil.getConversationId()
-                    if (conversationId.isBlank()) {
-                        "This conversation can not be deleted.".warn()
-                        return@addActionListener
-                    }
-
-                    DeleteConversationWorker(
-                        authSession.accessToken,
-                        conversationId,
-                        progressBar,
-                        conversationList,
-                    ).execute()
-                }
-            })
-
-            add(JMenuItem(Constant.CLEAR).apply {
-                addActionListener {
-                    val option = JOptionPane.showConfirmDialog(null, "Do you want to clear all conversions?")
-                    if (option != JOptionPane.OK_OPTION) {
-                        return@addActionListener
-                    }
-
-                    ClearAllConversationsWorker(
-                        authSession.accessToken,
-                        progressBar,
-                        conversationList,
-                    ).execute()
-                }
-            })
-        }
-        conversationList.componentPopupMenu = conversationListPopupMenu
+                conversationListPopupMenu.show(e.component, e.x, e.y)
+            }
+        })
 
         val leftPanel = JPanel().apply {
             layout = BorderLayout()
@@ -246,6 +262,30 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
             add(JScrollPane(conversationList).apply {
                 horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
             })
+
+            add(JPanel().apply {
+                layout = GridLayout(2, 1)
+
+                add(JButton(Constant.REFRESH).apply {
+                    addActionListener {
+                        GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
+                    }
+                })
+                add(JButton(Constant.CLEAR).apply {
+                    addActionListener {
+                        val option = JOptionPane.showConfirmDialog(null, "Do you want to clear all conversions?")
+                        if (option != JOptionPane.OK_OPTION) {
+                            return@addActionListener
+                        }
+
+                        ClearAllConversationsWorker(
+                            authSession.accessToken,
+                            progressBar,
+                            conversationList,
+                        ).execute()
+                    }
+                })
+            }, BorderLayout.SOUTH)
         }
 
         val rightPanel = JPanel().apply {

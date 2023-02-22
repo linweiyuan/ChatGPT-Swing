@@ -60,7 +60,9 @@ class ChatWorker(
             if (response.statusCode() == Constant.HTTP_TOO_MANY_REQUESTS) {
                 "Too many requests, please try again later.".warn()
                 return null
-            } else if (response.statusCode() == Constant.HTTP_INTERNAL_SERVER_ERROR) {
+            }
+
+            if (response.statusCode() == Constant.HTTP_INTERNAL_SERVER_ERROR) {
                 "Server error, please try again later.".warn()
                 return null
             }
