@@ -31,7 +31,6 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
         }
 
         setLocationRelativeTo(null)
-        isResizable = false
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
         isVisible = true
     }
