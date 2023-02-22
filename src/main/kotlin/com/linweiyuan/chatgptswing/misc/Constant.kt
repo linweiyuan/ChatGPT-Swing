@@ -25,6 +25,8 @@ object Constant {
     const val USER_AGENT =
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 
+    const val TIMEOUT_SECONDS = 123
+
     const val HTTP_OK = 200
     const val HTTP_BAD_REQUEST = 400
     const val HTTP_TOO_MANY_REQUESTS = 429

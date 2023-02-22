@@ -26,7 +26,6 @@ class ChatWorker(
 
     override fun doInBackground(): Conversation? {
         val content = contentField.text.trim()
-
         chatPane.contentType = Constant.TEXT_PLAIN
         progressBar.isIndeterminate = true
         contentField.isEditable = !contentField.isEditable
@@ -34,77 +33,81 @@ class ChatWorker(
         chatPane.border = BorderFactory.createTitledBorder(content)
         chatPane.text = ""
 
-        val connection = Jsoup.newSession().useDefault(accessToken)
+        try {
+            val connection = Jsoup.newSession().useDefault(accessToken)
 
-        val messageId = UUID.randomUUID().toString()
-        val chatRequest = ChatRequest(
-            messages = listOf(
-                Message(
-                    id = messageId,
-                    author = Author(Constant.ROLE_USER),
-                    content = Content(parts = mutableListOf(content))
-                )
-            ),
-        )
-        if (conversationId.isNotBlank()) {
-            chatRequest.conversationId = conversationId
-        }
-        if (parentMessageId.isNotBlank()) {
-            chatRequest.parentMessageId = parentMessageId
-        }
-
-        val response = connection.newRequest().url("https://apps.openai.com/api/conversation")
-            .method(Connection.Method.POST)
-            .requestBody(JSON.toJSONString(chatRequest))
-            .execute()
-        if (response.statusCode() == Constant.HTTP_TOO_MANY_REQUESTS) {
-            "Too many requests, please try again later.".warn()
-            return null
-        } else if (response.statusCode() == Constant.HTTP_INTERNAL_SERVER_ERROR) {
-            "Server error, please try again later.".warn()
-            return null
-        }
-
-        response.bodyStream().bufferedReader().use {
-            var line = it.readLine()
-            while (line != null) {
-                if (line == "") {
-                    line = it.readLine()
-                    continue
-                } else if (line == "event: ping") {
-                    it.readLine() // time
-                    it.readLine() // \n
-                    line = it.readLine()
-                    continue
-                } else if (line == "data: [DONE]") {
-                    break
-                }
-
-                val chatResponse = JSON.parseObject(line.substring(6), ChatResponse::class.java) // remove "data: "
-                if (conversationId.isBlank()) {
-                    conversationId = chatResponse.conversationId
-                }
-                if (parentMessageId.isBlank()) {
-                    IdUtil.setParentMessageId(chatResponse.message.id)
-                }
-                val part = chatResponse.message.content.parts[0]
-                if (part.isNotBlank()) {
-                    publish(chatResponse.message.content.parts[0])
-                }
-
-                line = it.readLine()
+            val messageId = UUID.randomUUID().toString()
+            val chatRequest = ChatRequest(
+                messages = listOf(
+                    Message(
+                        id = messageId,
+                        author = Author(Constant.ROLE_USER),
+                        content = Content(parts = mutableListOf(content))
+                    )
+                ),
+            )
+            if (conversationId.isNotBlank()) {
+                chatRequest.conversationId = conversationId
             }
-        }
+            if (parentMessageId.isNotBlank()) {
+                chatRequest.parentMessageId = parentMessageId
+            }
 
-        if (IdUtil.getConversationId().isBlank()) {
-            val json = connection.newRequest()
-                .url(String.format("https://apps.openai.com/api/conversation/gen_title/%s", conversationId))
-                .requestBody(JSON.toJSONString(GenerateTitleRequest(messageId)))
-                .post()
-                .text()
-            IdUtil.setConversationId(conversationId)
-            val generateTitleResponse = JSON.parseObject(json, GenerateTitleResponse::class.java)
-            return Conversation(conversationId, generateTitleResponse.title)
+            val response = connection.newRequest().url("https://apps.openai.com/api/conversation")
+                .method(Connection.Method.POST)
+                .requestBody(JSON.toJSONString(chatRequest))
+                .execute()
+            if (response.statusCode() == Constant.HTTP_TOO_MANY_REQUESTS) {
+                "Too many requests, please try again later.".warn()
+                return null
+            } else if (response.statusCode() == Constant.HTTP_INTERNAL_SERVER_ERROR) {
+                "Server error, please try again later.".warn()
+                return null
+            }
+
+            response.bodyStream().bufferedReader().use {
+                var line = it.readLine()
+                while (line != null) {
+                    if (line == "") {
+                        line = it.readLine()
+                        continue
+                    } else if (line == "event: ping") {
+                        it.readLine() // time
+                        it.readLine() // \n
+                        line = it.readLine()
+                        continue
+                    } else if (line == "data: [DONE]") {
+                        break
+                    }
+
+                    val chatResponse = JSON.parseObject(line.substring(6), ChatResponse::class.java) // remove "data: "
+                    if (conversationId.isBlank()) {
+                        conversationId = chatResponse.conversationId
+                    }
+                    if (parentMessageId.isBlank()) {
+                        IdUtil.setParentMessageId(chatResponse.message.id)
+                    }
+                    val part = chatResponse.message.content.parts[0]
+                    if (part.isNotBlank()) {
+                        publish(chatResponse.message.content.parts[0])
+                    }
+
+                    line = it.readLine()
+                }
+            }
+
+            if (IdUtil.getConversationId().isBlank()) {
+                val json = connection.newRequest()
+                    .url("https://apps.openai.com/api/conversation/gen_title/$conversationId")
+                    .requestBody(JSON.toJSONString(GenerateTitleRequest(messageId)))
+                    .post()
+                    .text()
+                IdUtil.setConversationId(conversationId)
+                val generateTitleResponse = JSON.parseObject(json, GenerateTitleResponse::class.java)
+                return Conversation(conversationId, generateTitleResponse.title)
+            }
+        } catch (e: Exception) {
+            e.toString().warn()
         }
 
         return null

@@ -29,23 +29,28 @@ class GetConversationContentWorker(
 
     override fun doInBackground(): Void? {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
+        chatPane.border = null
         chatPane.text = ""
 
-        val connection = Jsoup.newSession().useDefault(accessToken)
+        try {
+            val connection = Jsoup.newSession().useDefault(accessToken)
 
-        val response = connection.newRequest()
-            .url("https://apps.openai.com/api/conversation/$conversationId")
-            .execute()
-        if (response.statusCode() != Constant.HTTP_OK) {
-            "Failed to get conversation content.".warn()
-            return null
+            val response = connection.newRequest()
+                .url("https://apps.openai.com/api/conversation/$conversationId")
+                .execute()
+            if (response.statusCode() != Constant.HTTP_OK) {
+                "Failed to get conversation content.".warn()
+                return null
+            }
+
+            val chatContentResponse = JSON.parseObject(response.body(), ConversationContentResponse::class.java)
+            val mapping = chatContentResponse.mapping
+            val currentNode = chatContentResponse.currentNode
+            IdUtil.setParentMessageId(currentNode)
+            handleConversationDetail(mapping, currentNode)
+        } catch (e: Exception) {
+            e.toString().warn()
         }
-
-        val chatContentResponse = JSON.parseObject(response.body(), ConversationContentResponse::class.java)
-        val mapping = chatContentResponse.mapping
-        val currentNode = chatContentResponse.currentNode
-        IdUtil.setParentMessageId(currentNode)
-        handleConversationDetail(mapping, currentNode)
 
         return null
     }

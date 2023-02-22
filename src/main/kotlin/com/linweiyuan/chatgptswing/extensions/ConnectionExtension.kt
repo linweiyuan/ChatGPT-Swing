@@ -6,6 +6,7 @@ import org.jsoup.Connection
 fun Connection.useDefault(accessToken: String = ""): Connection {
     var connection = this.ignoreContentType(true)
         .ignoreHttpErrors(true)
+        .timeout(Constant.TIMEOUT_SECONDS * 1000)
         .userAgent(Constant.USER_AGENT)
     if (accessToken.isNotBlank()) {
         connection = connection.headers(

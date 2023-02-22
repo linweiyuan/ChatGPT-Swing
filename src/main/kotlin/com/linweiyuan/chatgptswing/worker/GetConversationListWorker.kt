@@ -24,21 +24,25 @@ class GetConversationListWorker(
     override fun doInBackground(): Void? {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
 
-        val connection = Jsoup.newSession().useDefault(accessToken)
+        try {
+            val connection = Jsoup.newSession().useDefault(accessToken)
 
-        val response = connection
-            .url("https://apps.openai.com/api/conversations?offset=0&limit=${Constant.CONVERSATION_LIST_FETCH_COUNT}")
-            .execute()
-        if (response.statusCode() != Constant.HTTP_OK) {
-            "Failed to get conversation list.".warn()
-            return null
-        }
+            val response = connection
+                .url("https://apps.openai.com/api/conversations?offset=0&limit=${Constant.CONVERSATION_LIST_FETCH_COUNT}")
+                .execute()
+            if (response.statusCode() != Constant.HTTP_OK) {
+                "Failed to get conversation list.".warn()
+                return null
+            }
 
-        conversationListModel.clear()
-        JSON.parseObject(response.body(), ConversationListResponse::class.java).items.forEach {
-            conversationListModel.addItem(it)
+            conversationListModel.clear()
+            JSON.parseObject(response.body(), ConversationListResponse::class.java).items.forEach {
+                conversationListModel.addItem(it)
+            }
+            conversationListModel.update()
+        } catch (e: Exception) {
+            e.toString().warn()
         }
-        conversationListModel.update()
 
         return null
     }
