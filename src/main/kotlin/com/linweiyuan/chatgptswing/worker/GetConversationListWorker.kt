@@ -45,6 +45,8 @@ class GetConversationListWorker(
 
     override fun done() {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
+
+        conversationList.selectedIndex = conversationListModel.getIndexByConversationId(IdUtil.getConversationId())
     }
 
 }
