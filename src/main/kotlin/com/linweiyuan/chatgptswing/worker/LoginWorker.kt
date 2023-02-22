@@ -10,12 +10,17 @@ import com.linweiyuan.chatgptswing.misc.Constant
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.io.File
+import java.net.InetSocketAddress
+import java.net.Proxy
 import javax.swing.*
 
 class LoginWorker(
     private val progressBar: JProgressBar,
     private val usernameField: JTextField,
     private val passwordField: JPasswordField,
+    private val proxyHostField: JTextField,
+    private val proxyPortField: JTextField,
+    private val buttonGroup: ButtonGroup,
     private val loginButton: JButton,
     private val mainFrame: JFrame,
 ) : SwingWorker<AuthSession, Void>() {
@@ -24,9 +29,28 @@ class LoginWorker(
         updateUI()
 
         try {
-            val connection = Jsoup.newSession()
-                .useDefault()
-                .proxy("127.0.0.1", 20171) // only login needs proxy
+            val connection = Jsoup.newSession().useDefault()
+
+            // only login needs proxy to check whether the country is supported
+            val proxyHost = proxyHostField.text.trim()
+            val proxyPort = proxyPortField.text.trim()
+            val actionCommand = buttonGroup.selection.actionCommand
+            if (actionCommand != Constant.PROXY_TYPE_NONE) {
+                if (proxyHost.isBlank() || proxyPort.isBlank()) {
+                    "Please input proxy host and proxy port.".warn()
+                    return null
+                }
+
+                when (buttonGroup.selection.actionCommand) {
+                    Constant.PROXY_TYPE_HTTP -> {
+                        connection.proxy(proxyHost, proxyPort.toInt())
+                    }
+
+                    Constant.PROXY_TYPE_SOCKS5 -> {
+                        connection.proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyHost, proxyPort.toInt())))
+                    }
+                }
+            }
 
             var response = connection.newRequest().url("https://explorer.api.openai.com/api/auth/csrf").execute()
             if (response.statusCode() != Constant.HTTP_OK) {
@@ -76,12 +100,15 @@ class LoginWorker(
                 return null
             }
 
-            response = connection.newRequest().url("https://explorer.api.openai.com/api/auth/session")
-                .followRedirects(false)
-                .execute()
+            response = connection.newRequest().url("https://explorer.api.openai.com/api/auth/session").execute()
             val responseBody = response.body()
-            if (response.statusCode() != Constant.HTTP_OK || responseBody == "{}") {
+            if (response.statusCode() != Constant.HTTP_OK) {
                 "Failed to get access token, please try again later.".warn()
+                return null
+            }
+
+            if (responseBody == "{}") {
+                "OpenAI's services are not available in your country.".warn()
                 return null
             }
 

@@ -9,6 +9,11 @@ object Constant {
 
     const val USERNAME = "Email"
     const val PASSWORD = "Password"
+    const val PROXY_HOST = "Proxy Host"
+    const val PROXY_PORT = "Proxy Port"
+    const val PROXY_TYPE_NONE = "NONE"
+    const val PROXY_TYPE_HTTP = "HTTP"
+    const val PROXY_TYPE_SOCKS5 = "SOCKS5"
     const val LOGIN = "Login"
     const val CONTENT = "Content"
     const val REFRESH = "Refresh"

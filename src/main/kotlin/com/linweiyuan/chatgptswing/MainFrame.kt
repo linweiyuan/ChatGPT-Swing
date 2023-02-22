@@ -58,10 +58,52 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
             gridwidth = 1
         })
 
+        val proxyHostField = JTextField(Constant.LOGIN_FIELD_WIDTH)
+        add(proxyHostField.wrapped(Constant.PROXY_HOST), gridBagConstraints.apply {
+            gridx = 0
+            gridy = 1
+            gridwidth = 1
+        })
+
+        val proxyPortField = JTextField(Constant.LOGIN_FIELD_WIDTH)
+        add(proxyPortField.wrapped(Constant.PROXY_PORT), gridBagConstraints.apply {
+            gridx = 1
+            gridy = 1
+            gridwidth = 1
+        })
+
+        val buttonGroup = ButtonGroup()
+        val proxyButtonPanel = JPanel().apply {
+            val noneProxyButton = JRadioButton(Constant.PROXY_TYPE_NONE).apply {
+                isSelected = true
+                actionCommand = Constant.PROXY_TYPE_NONE
+            }
+            val httpProxyButton = JRadioButton(Constant.PROXY_TYPE_HTTP).apply {
+                actionCommand = Constant.PROXY_TYPE_HTTP
+            }
+            val socks5ProxyButton = JRadioButton(Constant.PROXY_TYPE_SOCKS5).apply {
+                actionCommand = Constant.PROXY_TYPE_SOCKS5
+            }
+
+            buttonGroup.add(noneProxyButton)
+            buttonGroup.add(httpProxyButton)
+            buttonGroup.add(socks5ProxyButton)
+
+            add(noneProxyButton)
+            add(httpProxyButton)
+            add(socks5ProxyButton)
+        }
+
+        add(proxyButtonPanel, gridBagConstraints.apply {
+            gridx = 0
+            gridy = 2
+            gridwidth = 2
+        })
+
         val progressBar = JProgressBar()
         add(progressBar, gridBagConstraints.apply {
             gridx = 0
-            gridy = 2
+            gridy = 4
             gridwidth = 2
         })
 
@@ -71,12 +113,21 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                     "Please input email and password first.".warn()
                     return@addActionListener
                 }
-                LoginWorker(progressBar, usernameField, passwordField, this, this@MainFrame).execute()
+                LoginWorker(
+                    progressBar,
+                    usernameField,
+                    passwordField,
+                    proxyHostField,
+                    proxyPortField,
+                    buttonGroup,
+                    this,
+                    this@MainFrame
+                ).execute()
             }
         }
         add(loginButton, gridBagConstraints.apply {
             gridx = 0
-            gridy = 1
+            gridy = 3
             gridwidth = 2
         })
 
