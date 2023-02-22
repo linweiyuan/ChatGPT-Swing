@@ -195,6 +195,28 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                         ).execute()
                     }
                 })
+
+                add(JMenuItem(Constant.DELETE).apply {
+                    addActionListener {
+                        val option = JOptionPane.showConfirmDialog(null, "Do you want to delete this conversion?")
+                        if (option != JOptionPane.OK_OPTION) {
+                            return@addActionListener
+                        }
+
+                        val conversationId = IdUtil.getConversationId()
+                        if (conversationId.isBlank()) {
+                            "This conversation can not be deleted.".warn()
+                            return@addActionListener
+                        }
+
+                        DeleteConversationWorker(
+                            authSession.accessToken,
+                            conversationId,
+                            progressBar,
+                            conversationList,
+                        ).execute()
+                    }
+                })
             }
         conversationList.componentPopupMenu = conversationListPopupMenu
 
