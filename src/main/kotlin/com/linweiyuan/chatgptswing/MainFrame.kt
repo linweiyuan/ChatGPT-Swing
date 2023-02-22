@@ -217,6 +217,12 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                         ).execute()
                     }
                 })
+
+                add(JMenuItem(Constant.REFRESH).apply {
+                    addActionListener {
+                        GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
+                    }
+                })
             }
         conversationList.componentPopupMenu = conversationListPopupMenu
 
@@ -226,13 +232,6 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
             add(JScrollPane(conversationList).apply {
                 horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
             })
-
-            val refreshButton = JButton(Constant.REFRESH).apply {
-                addActionListener {
-                    GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
-                }
-            }
-            add(refreshButton, BorderLayout.SOUTH)
         }
 
         val rightPanel = JPanel().apply {
