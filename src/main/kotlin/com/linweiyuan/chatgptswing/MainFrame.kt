@@ -9,11 +9,11 @@ import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import com.linweiyuan.chatgptswing.worker.*
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.io.File
+import java.net.URI
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.swing.*
@@ -232,6 +232,29 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
 
         add(progressBar, BorderLayout.NORTH)
         add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel))
+
+        val aboutMenuItem = JMenuItem(Constant.ABOUT).apply {
+            addActionListener {
+                JOptionPane.showMessageDialog(
+                    null,
+                    JLabel(Constant.ABOUT_INTO).apply {
+                        addMouseListener(object : MouseAdapter() {
+                            override fun mouseClicked(e: MouseEvent) {
+                                if (e.button == MouseEvent.BUTTON1) {
+                                    Desktop.getDesktop().browse(URI(Constant.GITHUB_REPO_URL))
+                                }
+                            }
+                        })
+                    })
+            }
+        }
+        val moreMenu = JMenu(Constant.MORE).apply {
+            add(aboutMenuItem)
+        }
+        val menuBar = JMenuBar().apply {
+            add(moreMenu)
+        }
+        jMenuBar = menuBar
 
         size = Dimension(1366, 768)
 

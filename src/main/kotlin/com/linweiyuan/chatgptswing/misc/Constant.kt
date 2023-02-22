@@ -18,6 +18,10 @@ object Constant {
     const val CONTENT = "Content"
     const val REFRESH = "Refresh"
     const val TTS = "TTS"
+    const val ABOUT = "About"
+    const val GITHUB_REPO_URL = "https://github.com/linweiyuan/ChatGPT-Swing"
+    const val ABOUT_INTO = "GitHub: $GITHUB_REPO_URL (click to open)"
+    const val MORE = "More"
 
     const val MAGIC_NUMBER = 1
 
