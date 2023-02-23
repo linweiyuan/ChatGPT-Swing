@@ -1,15 +1,14 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.alibaba.fastjson2.JSONObject
 import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.extensions.showErrorMessage
+import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import org.jsoup.Connection
+import org.jsoup.Jsoup
 import javax.swing.JList
 import javax.swing.JProgressBar
 import javax.swing.SwingUtilities
@@ -21,32 +20,27 @@ class RenameConversationTitleWorker(
     private val title: String,
     private val progressBar: JProgressBar,
     private val conversationList: JList<Conversation>
-) : SwingWorker<Void, Message>() {
+) : SwingWorker<Boolean, Message>() {
 
-    override fun doInBackground(): Void? {
+    override fun doInBackground(): Boolean {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
 
         try {
-            val client = OkHttpClient()
-            val request = Request.Builder()
-                .url("https://apps.openai.com/api/conversation/$conversationId")
-                .header(Constant.AUTHORIZATION, accessToken)
-                .patch(JSON.toJSONString(JSONObject().apply {
-                    put("title", title)
-                }).toRequestBody(Constant.APPLICATION_JSON.toMediaType()))
-                .build()
-            client.newCall(request).execute().use {
-                if (!it.isSuccessful) {
-                    "Failed to rename conversation.".warn()
-                    return null
-                }
+            val response = Jsoup.newSession().useDefault(accessToken)
+                .url(String.format(Constant.URL_RENAME_CONVERSATION, conversationId))
+                .method(Connection.Method.POST)
+                .requestBody(JSON.toJSONString(mapOf("title" to title)))
+                .execute()
+            if (response.statusCode() != Constant.HTTP_OK) {
+                response.showErrorMessage()
+                return false
             }
 
+            return true
         } catch (e: Exception) {
             e.toString().warn()
+            return false
         }
-
-        return null
     }
 
     override fun done() {

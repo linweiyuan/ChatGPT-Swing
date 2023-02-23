@@ -54,7 +54,9 @@ class TTSWorker(
         updateUI()
 
         val ttsResponse = get()
-        ttsButton.text = "${Constant.TTS} (${ttsResponse.counts})"
+        if (ttsResponse != null) {
+            ttsButton.text = "${Constant.TTS} (${ttsResponse.counts})"
+        }
     }
 
     private fun updateUI() {

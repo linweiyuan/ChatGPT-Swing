@@ -17,6 +17,7 @@ import java.io.File
 import java.net.URI
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.*
 import javax.swing.*
 
 class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
@@ -168,7 +169,6 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                             conversations[selectedIndex].id,
                             progressBar,
                             chatPane,
-                            this
                         ).execute()
                     } else {
                         chatPane.contentType = Constant.TEXT_HTML
@@ -195,13 +195,11 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                 val conversationListPopupMenu = JPopupMenu().apply {
                     add(JMenuItem(Constant.REFRESH).apply {
                         addActionListener {
-                            @Suppress("UNCHECKED_CAST")
                             GetConversationContentWorker(
                                 authSession.accessToken,
                                 conversations[selectedIndex].id,
                                 progressBar,
                                 chatPane,
-                                e.component as JList<Conversation>
                             ).execute()
                         }
                     })
@@ -288,6 +286,11 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
             }, BorderLayout.SOUTH)
         }
 
+        val contentField = JTextField().apply {
+            addActionListener {
+                ChatWorker(authSession.accessToken, progressBar, this, chatPane, conversationList).execute()
+            }
+        }
         val rightPanel = JPanel().apply {
             layout = GridBagLayout()
 
@@ -295,11 +298,6 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
                 fill = GridBagConstraints.BOTH
             }
 
-            val contentField = JTextField().apply {
-                addActionListener {
-                    ChatWorker(authSession.accessToken, progressBar, this, chatPane, conversationList).execute()
-                }
-            }
             add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
                 gridx = 0
                 gridy = 0

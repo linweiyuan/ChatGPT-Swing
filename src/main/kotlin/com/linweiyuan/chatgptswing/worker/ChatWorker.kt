@@ -1,11 +1,12 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.*
+import com.linweiyuan.chatgptswing.dataclass.ChatResponse
+import com.linweiyuan.chatgptswing.dataclass.Conversation
+import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.toHtml
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
-import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
@@ -34,36 +35,20 @@ class ChatWorker(
         chatPane.text = ""
 
         try {
-            val connection = Jsoup.newSession().useDefault(accessToken)
-
             val messageId = UUID.randomUUID().toString()
-            val chatRequest = ChatRequest(
-                messages = listOf(
-                    Message(
-                        id = messageId,
-                        author = Author(Constant.ROLE_USER),
-                        content = Content(parts = mutableListOf(content))
-                    )
-                ),
+            val requestMap = mapOf(
+                "messageId" to messageId,
+                "parentMessageId" to parentMessageId.ifBlank { UUID.randomUUID().toString() },
+                "conversationId" to conversationId.ifBlank { null },
+                "content" to content,
             )
-            if (conversationId.isNotBlank()) {
-                chatRequest.conversationId = conversationId
-            }
-            if (parentMessageId.isNotBlank()) {
-                chatRequest.parentMessageId = parentMessageId
-            }
-
-            val response = connection.newRequest().url("https://apps.openai.com/api/conversation")
+            val response = Jsoup.newSession().useDefault(accessToken).newRequest()
+                .url(Constant.URL_MAKE_CONVERSATION)
                 .method(Connection.Method.POST)
-                .requestBody(JSON.toJSONString(chatRequest))
+                .requestBody(JSON.toJSONString(requestMap))
                 .execute()
-            if (response.statusCode() == Constant.HTTP_TOO_MANY_REQUESTS) {
-                "Too many requests, please try again later.".warn()
-                return null
-            }
-
-            if (response.statusCode() == Constant.HTTP_INTERNAL_SERVER_ERROR) {
-                "Server error, please try again later.".warn()
+            if (response.statusCode() != Constant.HTTP_OK) {
+                response.showErrorMessage()
                 return null
             }
 
@@ -82,7 +67,8 @@ class ChatWorker(
                         break
                     }
 
-                    val chatResponse = JSON.parseObject(line.substring(6), ChatResponse::class.java) // remove "data: "
+                    // remove "data: ", length is 6
+                    val chatResponse = JSON.parseObject(line.substring(6), ChatResponse::class.java)
                     if (conversationId.isBlank()) {
                         conversationId = chatResponse.conversationId
                     }
@@ -99,14 +85,15 @@ class ChatWorker(
             }
 
             if (IdUtil.getConversationId().isBlank()) {
-                val json = connection.newRequest()
-                    .url("https://apps.openai.com/api/conversation/gen_title/$conversationId")
-                    .requestBody(JSON.toJSONString(GenerateTitleRequest(messageId)))
-                    .post()
-                    .text()
-                IdUtil.setConversationId(conversationId)
-                val generateTitleResponse = JSON.parseObject(json, GenerateTitleResponse::class.java)
-                return Conversation(conversationId, generateTitleResponse.title)
+                SwingUtilities.invokeAndWait {
+                    GenTitleWorker(
+                        accessToken,
+                        conversationId,
+                        messageId,
+                        progressBar,
+                        conversationList
+                    ).execute()
+                }
             }
         } catch (e: Exception) {
             e.toString().warn()
@@ -128,19 +115,12 @@ class ChatWorker(
         chatPane.contentType = Constant.TEXT_HTML // this line will clear all contents
         chatPane.text = html
 
-        val conversation = get()
-        if (conversation != null) {
-            val conversationListModel = ((conversationList.model) as ConversationListModel)
-            conversationListModel.addItem(conversation)
-            conversationListModel.update()
-        }
         SwingUtilities.invokeLater {
             GetConversationContentWorker(
                 accessToken,
-                IdUtil.getConversationId(),
+                conversationId,
                 progressBar,
                 chatPane,
-                conversationList
             ).execute()
         }
     }

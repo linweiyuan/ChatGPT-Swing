@@ -7,12 +7,11 @@ fun Connection.useDefault(accessToken: String = ""): Connection {
     var connection = this.ignoreContentType(true)
         .ignoreHttpErrors(true)
         .timeout(Constant.TIMEOUT_SECONDS * 1000)
-        .userAgent(Constant.USER_AGENT)
+        .header(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON)
     if (accessToken.isNotBlank()) {
         connection = connection.headers(
             mapOf(
-                Constant.CONTENT_TYPE to Constant.APPLICATION_JSON,
-                Constant.AUTHORIZATION to "${Constant.BEARER} $accessToken",
+                Constant.AUTHORIZATION to accessToken,
             )
         )
     }

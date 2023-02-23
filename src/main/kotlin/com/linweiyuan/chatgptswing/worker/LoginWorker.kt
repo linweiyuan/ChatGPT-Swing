@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONWriter
 import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.AuthSession
+import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
@@ -23,9 +24,9 @@ class LoginWorker(
     private val buttonGroup: ButtonGroup,
     private val loginButton: JButton,
     private val mainFrame: JFrame,
-) : SwingWorker<AuthSession, Void>() {
+) : SwingWorker<Boolean, Void>() {
 
-    override fun doInBackground(): AuthSession? {
+    override fun doInBackground(): Boolean {
         updateUI()
 
         try {
@@ -38,7 +39,7 @@ class LoginWorker(
             if (actionCommand != Constant.PROXY_TYPE_NONE) {
                 if (proxyHost.isBlank() || proxyPort.isBlank()) {
                     "Please input proxy host and proxy port.".warn()
-                    return null
+                    return false
                 }
 
                 when (buttonGroup.selection.actionCommand) {
@@ -52,82 +53,36 @@ class LoginWorker(
                 }
             }
 
-            var response = connection.newRequest().url("https://explorer.api.openai.com/api/auth/csrf").execute()
-            if (response.statusCode() != Constant.HTTP_OK) {
-                "Failed to get CSRF token. ${response.statusMessage()}".warn()
-                return null
-            }
-
-            val csrfToken = JSON.parseObject(response.body()).getString("csrfToken")
-            response = connection.newRequest().url("https://explorer.api.openai.com/api/auth/signin/auth0?")
-                .data("callbackUrl", "/")
-                .data("csrfToken", csrfToken)
-                .data("json", "true") // need to test with false
-                .method(Connection.Method.POST)
-                .execute()
-            if (response.statusCode() != Constant.HTTP_OK) {
-                "Failed to get authorized url. ${response.statusMessage()}".warn()
-                return null
-            }
-
-            val authorizeUrl = JSON.parseObject(response.body()).getString("url")
-            response = connection.newRequest().url(authorizeUrl).execute()
-            if (response.statusCode() != Constant.HTTP_OK) {
-                "Failed to get state. ${response.statusMessage()}".warn()
-                return null
-            }
-
             val username = usernameField.text
-            val state = response.parse().select("input[name=state]").`val`()
-            response = connection.newRequest().url("https://auth0.openai.com/u/login/identifier?state=$state")
-                .data("username", username)
-                .method(Connection.Method.POST)
-                .execute()
-            if (response.statusCode() == Constant.HTTP_BAD_REQUEST) {
-                response.parse().select("#error-element-username").text().warn()
-                return null
-            }
-
             val password = String(passwordField.password)
-            response = connection.newRequest().url("https://auth0.openai.com/u/login/password?state=$state")
-                .data("username", username)
-                .data("password", password)
+            val response = connection.newRequest()
+                .url(Constant.URL_LOGIN)
                 .method(Connection.Method.POST)
+                .requestBody(JSON.toJSONString(mapOf("username" to username, "password" to password)))
                 .execute()
-            if (response.statusCode() == Constant.HTTP_BAD_REQUEST) {
-                "Email or password is not correct.".warn()
-                return null
-            }
-
-            response = connection.newRequest().url("https://explorer.api.openai.com/api/auth/session").execute()
-            val responseBody = response.body()
             if (response.statusCode() != Constant.HTTP_OK) {
-                "Failed to get access token, please try again later.".warn()
-                return null
+                response.showErrorMessage()
+                return false
             }
 
-            if (responseBody == "{}") {
-                "OpenAI's services are not available in your country.".warn()
-                return null
-            }
-
-            return JSON.parseObject(response.body(), AuthSession::class.java)
+            val authSession = JSON.parseObject(response.body(), AuthSession::class.java)
+            File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).writeText(
+                JSON.toJSONString(authSession, JSONWriter.Feature.PrettyFormat)
+            )
+            return true
         } catch (e: Exception) {
             e.toString().warn()
-            return null
+            return false
         }
     }
 
     override fun done() {
         updateUI()
 
-        val authSession = get()
-        if (authSession != null) {
-            File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).writeText(
-                JSON.toJSONString(authSession, JSONWriter.Feature.PrettyFormat)
-            )
+        val ok = get()
+        if (ok) {
             mainFrame.dispose()
-            MainFrame(false)
+            MainFrame(shouldLogin = false, firstTimeLogin = true)
         }
     }
 

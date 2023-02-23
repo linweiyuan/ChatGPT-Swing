@@ -3,18 +3,7 @@
 package com.linweiyuan.chatgptswing.dataclass
 
 import com.alibaba.fastjson2.annotation.JSONField
-import com.linweiyuan.chatgptswing.misc.Constant
 import java.util.*
-
-data class ChatRequest(
-    val action: String = "next",
-    val model: String = Constant.MODEL_NAME,
-    @JSONField(name = "parent_message_id")
-    var parentMessageId: String = UUID.randomUUID().toString(),
-    val messages: List<Message>,
-    @JSONField(name = "conversation_id")
-    var conversationId: String? = null,
-)
 
 data class Message(
     val id: String,
