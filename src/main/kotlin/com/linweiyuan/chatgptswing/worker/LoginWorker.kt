@@ -78,8 +78,7 @@ class LoginWorker(
             }
 
             val username = usernameField.text
-            val href = response.parse().select("a").attr("href")
-            val state = href.substring(href.indexOf('=') + 1)
+            val state = response.parse().select("input[name=state]").`val`()
             response = connection.newRequest().url("https://auth0.openai.com/u/login/identifier?state=$state")
                 .data("username", username)
                 .method(Connection.Method.POST)
