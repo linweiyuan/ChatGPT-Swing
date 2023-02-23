@@ -59,4 +59,7 @@ object Constant {
     const val DIV_POSTFIX = "</div>"
     const val DIV_BACKGROUND_COLOR_PREFIX_ASSISTANT = "<div style='background-color: #F7F7CB; color: #374151;'>"
     const val HTML_NEW_LINE = "<br />"
+
+    const val GREETING_CHINESE = "你好，我是%s，请问你叫什么名字？"
+    const val GREETING_ENGLITH = "Hello, I am %s, may I have your name?"
 }

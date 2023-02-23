@@ -20,13 +20,13 @@ import java.time.ZonedDateTime
 import java.util.*
 import javax.swing.*
 
-class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
+class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(Constant.TITLE) {
 
     init {
         if (shouldLogin) {
             initLoginFrame()
         } else {
-            initMainFrame()
+            initMainFrame(firstTimeLogin)
         }
 
         setLocationRelativeTo(null)
@@ -132,7 +132,7 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
         pack()
     }
 
-    private fun initMainFrame() {
+    private fun initMainFrame(firstTimeLogin: Boolean) {
         layout = BorderLayout()
 
         val json = File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).readText()
@@ -360,6 +360,16 @@ class MainFrame(shouldLogin: Boolean) : JFrame(Constant.TITLE) {
         size = Dimension(1366, 768)
 
         GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
+
+        if (firstTimeLogin) {
+            val username = System.getProperty("user.name")
+            if (Locale.getDefault().language == "zh") {
+                contentField.text = String.format(Constant.GREETING_CHINESE, username)
+            } else {
+                contentField.text = String.format(Constant.GREETING_ENGLITH, username)
+            }
+            ChatWorker(authSession.accessToken, progressBar, contentField, chatPane, conversationList).execute()
+        }
     }
 }
 
