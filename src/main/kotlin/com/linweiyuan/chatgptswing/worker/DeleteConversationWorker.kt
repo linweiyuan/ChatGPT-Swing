@@ -1,7 +1,6 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.Message
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
@@ -10,16 +9,15 @@ import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
-import javax.swing.JList
 import javax.swing.JProgressBar
-import javax.swing.SwingUtilities
+import javax.swing.JTree
 import javax.swing.SwingWorker
 
 class DeleteConversationWorker(
     private val accessToken: String,
     private val conversationId: String,
     private val progressBar: JProgressBar,
-    private val conversationList: JList<Conversation>
+    private val conversationTree: JTree,
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
@@ -49,9 +47,7 @@ class DeleteConversationWorker(
         val ok = get()
         if (ok) {
             IdUtil.clearIds()
-            SwingUtilities.invokeLater {
-                GetConversationListWorker(accessToken, progressBar, conversationList).execute()
-            }
+            GetConversationListWorker(accessToken, progressBar, conversationTree).execute()
         }
     }
 

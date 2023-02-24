@@ -1,29 +1,35 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.ConversationContentResponse
 import com.linweiyuan.chatgptswing.dataclass.ConversationDetail
 import com.linweiyuan.chatgptswing.dataclass.Message
-import com.linweiyuan.chatgptswing.extensions.showErrorMessage
-import com.linweiyuan.chatgptswing.extensions.toHtml
-import com.linweiyuan.chatgptswing.extensions.useDefault
-import com.linweiyuan.chatgptswing.extensions.warn
+import com.linweiyuan.chatgptswing.extensions.*
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
 import javax.swing.JProgressBar
 import javax.swing.JTextPane
+import javax.swing.JTree
 import javax.swing.SwingWorker
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 class GetConversationContentWorker(
     private val accessToken: String,
-    private val conversationId: String,
+    private val conversation: Conversation,
     private val progressBar: JProgressBar,
     private val chatPane: JTextPane,
+    private val conversationTree: JTree,
 ) : SwingWorker<Boolean, Message>() {
 
     private val contentBuilder = StringBuilder()
+    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
+    private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversation.id)
 
     override fun doInBackground(): Boolean {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
@@ -31,7 +37,7 @@ class GetConversationContentWorker(
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
-                .url(String.format(Constant.URL_GET_CONVERSATION_CONTENT, conversationId))
+                .url(String.format(Constant.URL_GET_CONVERSATION_CONTENT, conversation.id))
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
@@ -43,6 +49,7 @@ class GetConversationContentWorker(
             val currentNode = chatContentResponse.currentNode
             IdUtil.setParentMessageId(currentNode)
 
+            currentTreeNode?.removeAllChildren()
             handleConversationDetail(mapping, currentNode)
 
             return true
@@ -56,6 +63,7 @@ class GetConversationContentWorker(
         val chatDetail = mapping.getValue(id)
         val parentId = chatDetail.parent
         if (parentId != null) {
+            CacheUtil.setMessage(parentId, chatDetail.message!!.content.parts[0])
             handleConversationDetail(mapping, parentId)
         }
 
@@ -69,12 +77,11 @@ class GetConversationContentWorker(
         chunks.forEach {
             val content = it.content.parts[0]
             if (it.author.role == Constant.ROLE_USER) {
-                contentBuilder.append(Constant.DIV_BACKGROUND_COLOR_PREFIX_USER)
-            } else {
-                contentBuilder.append(Constant.DIV_BACKGROUND_COLOR_PREFIX_ASSISTANT)
+                // if start a new conversation, currentTreeNode is null
+                currentTreeNode?.add(DefaultMutableTreeNode(it))
             }
-            contentBuilder.append(content).append(Constant.DIV_POSTFIX)
-            contentBuilder.append(Constant.HTML_NEW_LINE)
+            contentBuilder.append(content)
+            contentBuilder.append(Constant.HTML_NEW_LINE).append(Constant.HTML_NEW_LINE) // need twice
         }
     }
 
@@ -87,7 +94,16 @@ class GetConversationContentWorker(
             chatPane.contentType = Constant.TEXT_HTML
             chatPane.text = html
 
-            CacheUtil.setConversation(conversationId, html)
+            CacheUtil.setConversation(conversation.id, html)
+
+            with(conversationTreeModel) {
+                reload()
+                val conversationId = IdUtil.getConversationId()
+                if (conversationId.isNotBlank()) {
+                    val highlightedNode = conversationTreeRoot.getCurrentNode(conversationId)
+                    conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
+                }
+            }
         }
     }
 

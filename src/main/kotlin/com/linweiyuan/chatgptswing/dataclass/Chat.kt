@@ -9,7 +9,9 @@ data class Message(
     val id: String,
     val author: Author,
     val content: Content,
-)
+) {
+    override fun toString() = content.parts[0]
+}
 
 data class Author(
     val role: String,

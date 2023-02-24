@@ -3,9 +3,9 @@ package com.linweiyuan.chatgptswing
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.dataclass.AuthSession
 import com.linweiyuan.chatgptswing.dataclass.Conversation
+import com.linweiyuan.chatgptswing.dataclass.Message
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
-import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
@@ -19,6 +19,8 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.*
 import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
 class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(Constant.TITLE) {
 
@@ -144,21 +146,25 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
             isEditable = false
         }
 
-        val conversations = mutableListOf<Conversation>()
-        val conversationListModel = ConversationListModel(conversations)
-        conversationListModel.clear() // make sure the default new chat is displayed
-        val conversationList = JList(conversationListModel).apply {
-            selectedIndex = 0 // default to start new chat
+        val conversationTreeModel = DefaultTreeModel(DefaultMutableTreeNode("ROOT"))
+        val conversationTree = JTree(conversationTreeModel).apply {
+            isRootVisible = false
+            expandsSelectedPaths = true
+            addTreeSelectionListener {
+                if (selectionPaths == null) {
+                    return@addTreeSelectionListener
+                }
 
-            addListSelectionListener {
-                if (!it.valueIsAdjusting) {
-                    val conversationId = conversations[this.selectedIndex].id
-                    if (conversationId.isBlank()) {
-                        chatPane.border = null
-                        chatPane.text = ""
-                        IdUtil.clearIds()
-                        return@addListSelectionListener
-                    }
+                val currentNode = it.path.lastPathComponent as DefaultMutableTreeNode
+                val rootNode = conversationTreeModel.root
+                // the message node
+                if (currentNode.parent != null && currentNode.parent != rootNode) {
+                    val message = currentNode.userObject as Message
+                    chatPane.text = CacheUtil.getMessage(message.id)
+                } else {
+                    // the conversation node
+                    val conversation = currentNode.userObject as Conversation
+                    val conversationId = conversation.id
 
                     IdUtil.setConversationId(conversationId)
 
@@ -166,40 +172,56 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                     if (text.isNullOrBlank()) {
                         GetConversationContentWorker(
                             authSession.accessToken,
-                            conversations[selectedIndex].id,
+                            conversation,
                             progressBar,
                             chatPane,
+                            this,
                         ).execute()
                     } else {
                         chatPane.contentType = Constant.TEXT_HTML
                         chatPane.text = text
                     }
+                    chatPane.text = text
                 }
             }
         }
 
-        conversationList.addMouseListener(object : MouseAdapter() {
+        conversationTree.addMouseListener(object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    val selectedIndex = conversationList.locationToIndex(e.point)
-                    if (selectedIndex == 0) {
-                        return
-                    }
+                val path = conversationTree.getPathForLocation(e.x, e.y) ?: return
 
-                    conversationList.selectedIndex = selectedIndex
-                    showPopupMenu(e, selectedIndex)
+                conversationTree.selectionPath = path
+
+                val currentNode = path.lastPathComponent as DefaultMutableTreeNode
+                if (currentNode.parent != conversationTree.model.root) {
+                    return
+                }
+
+                val conversation = currentNode.userObject as Conversation
+
+                if (SwingUtilities.isMiddleMouseButton(e)) {
+                    GetConversationContentWorker(
+                        authSession.accessToken,
+                        conversation,
+                        progressBar,
+                        chatPane,
+                        conversationTree,
+                    ).execute()
+                } else if (SwingUtilities.isRightMouseButton(e)) {
+                    showPopupMenu(e, conversation)
                 }
             }
 
-            private fun showPopupMenu(e: MouseEvent, selectedIndex: Int) {
+            private fun showPopupMenu(e: MouseEvent, conversation: Conversation) {
                 val conversationListPopupMenu = JPopupMenu().apply {
                     add(JMenuItem(Constant.REFRESH).apply {
                         addActionListener {
                             GetConversationContentWorker(
                                 authSession.accessToken,
-                                conversations[selectedIndex].id,
+                                conversation,
                                 progressBar,
                                 chatPane,
+                                conversationTree,
                             ).execute()
                         }
                     })
@@ -223,7 +245,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                                 conversationId,
                                 title,
                                 progressBar,
-                                conversationList,
+                                conversationTree,
                             ).execute()
                         }
                     })
@@ -236,16 +258,11 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             }
 
                             val conversationId = IdUtil.getConversationId()
-                            if (conversationId.isBlank()) {
-                                "This conversation can not be deleted.".warn()
-                                return@addActionListener
-                            }
-
                             DeleteConversationWorker(
                                 authSession.accessToken,
                                 conversationId,
                                 progressBar,
-                                conversationList,
+                                conversationTree,
                             ).execute()
                         }
                     })
@@ -257,16 +274,28 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
         val leftPanel = JPanel().apply {
             layout = BorderLayout()
 
-            add(JScrollPane(conversationList).apply {
+            add(JScrollPane(conversationTree).apply {
                 horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
             })
 
             add(JPanel().apply {
-                layout = GridLayout(2, 1)
+                layout = GridLayout(3, 1)
 
+                add(JButton(Constant.NEW).apply {
+                    addActionListener {
+                        chatPane.border = null
+                        chatPane.text = ""
+                        IdUtil.clearIds()
+                        conversationTree.clearSelection()
+                    }
+                })
                 add(JButton(Constant.REFRESH).apply {
                     addActionListener {
-                        GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
+                        GetConversationListWorker(
+                            authSession.accessToken,
+                            progressBar,
+                            conversationTree,
+                        ).execute()
                     }
                 })
                 add(JButton(Constant.CLEAR).apply {
@@ -279,7 +308,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                         ClearAllConversationsWorker(
                             authSession.accessToken,
                             progressBar,
-                            conversationList,
+                            conversationTree,
                         ).execute()
                     }
                 })
@@ -288,7 +317,13 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
         val contentField = JTextField().apply {
             addActionListener {
-                ChatWorker(authSession.accessToken, progressBar, this, chatPane, conversationList).execute()
+                ChatWorker(
+                    authSession.accessToken,
+                    progressBar,
+                    this,
+                    chatPane,
+                    conversationTree
+                ).execute()
             }
         }
         val rightPanel = JPanel().apply {
@@ -332,7 +367,9 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
         }
 
         add(progressBar, BorderLayout.NORTH)
-        add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel))
+        add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel).apply {
+            dividerLocation = Constant.SPLIT_PANE_DIVIDER_LOCATION
+        })
 
         val aboutMenuItem = JMenuItem(Constant.ABOUT).apply {
             addActionListener {
@@ -357,9 +394,9 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
         }
         jMenuBar = menuBar
 
-        size = Dimension(1366, 768)
+        size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
 
-        GetConversationListWorker(authSession.accessToken, progressBar, conversationList).execute()
+        GetConversationListWorker(authSession.accessToken, progressBar, conversationTree).execute()
 
         if (firstTimeLogin) {
             val username = System.getProperty("user.name")
@@ -368,7 +405,13 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
             } else {
                 contentField.text = String.format(Constant.GREETING_ENGLITH, username)
             }
-            ChatWorker(authSession.accessToken, progressBar, contentField, chatPane, conversationList).execute()
+            ChatWorker(
+                authSession.accessToken,
+                progressBar,
+                contentField,
+                chatPane,
+                conversationTree
+            ).execute()
         }
     }
 }

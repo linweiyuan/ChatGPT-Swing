@@ -1,26 +1,29 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.ConversationListResponse
+import com.linweiyuan.chatgptswing.extensions.getCurrentNode
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
-import com.linweiyuan.chatgptswing.listmodel.ConversationListModel
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
-import javax.swing.JList
 import javax.swing.JProgressBar
+import javax.swing.JTree
 import javax.swing.SwingWorker
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 class GetConversationListWorker(
     private val accessToken: String,
     private val progressBar: JProgressBar,
-    private val conversationList: JList<Conversation>
+    private val conversationTree: JTree,
 ) : SwingWorker<Boolean, Void>() {
 
-    private val conversationListModel = conversationList.model as ConversationListModel
+    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
 
     override fun doInBackground(): Boolean {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
@@ -32,9 +35,9 @@ class GetConversationListWorker(
                 return false
             }
 
-            conversationListModel.clear()
+            conversationTreeRoot.removeAllChildren()
             JSON.parseObject(response.body(), ConversationListResponse::class.java).items.forEach {
-                conversationListModel.addItem(it)
+                conversationTreeRoot.add(DefaultMutableTreeNode(it))
             }
 
             return true
@@ -49,8 +52,14 @@ class GetConversationListWorker(
 
         val ok = get()
         if (ok) {
-            conversationListModel.update()
-            conversationList.selectedIndex = conversationListModel.getIndexByConversationId(IdUtil.getConversationId())
+            with(conversationTreeModel) {
+                reload()
+                val conversationId = IdUtil.getConversationId()
+                if (conversationId.isNotBlank()) {
+                    val highlightedNode = conversationTreeRoot.getCurrentNode(conversationId)
+                    conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
+                }
+            }
         }
     }
 

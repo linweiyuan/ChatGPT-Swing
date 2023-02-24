@@ -19,7 +19,7 @@ class ChatWorker(
     private val progressBar: JProgressBar,
     private val contentField: JTextField,
     private val chatPane: JTextPane,
-    private val conversationList: JList<Conversation>,
+    private val conversationTree: JTree
 ) : SwingWorker<Conversation, String>() {
 
     private var conversationId = IdUtil.getConversationId()
@@ -85,26 +85,26 @@ class ChatWorker(
             }
 
             if (IdUtil.getConversationId().isBlank()) {
-                SwingUtilities.invokeAndWait {
+                SwingUtilities.invokeLater {
                     GenTitleWorker(
                         accessToken,
                         conversationId,
                         messageId,
                         progressBar,
-                        conversationList
+                        conversationTree,
                     ).execute()
                 }
             }
+
+            return Conversation(conversationId, "")
         } catch (e: Exception) {
             e.toString().warn()
+            return null
         }
-
-        return null
     }
 
     override fun process(chunks: MutableList<String>) {
-        // prefer not to use a loop
-        chatPane.text = chunks[chunks.size - 1]
+        chunks.forEach { chatPane.text = it }
     }
 
     override fun done() {
@@ -115,12 +115,14 @@ class ChatWorker(
         chatPane.contentType = Constant.TEXT_HTML // this line will clear all contents
         chatPane.text = html
 
-        SwingUtilities.invokeLater {
+        val conversation = get()
+        if (conversation != null) {
             GetConversationContentWorker(
                 accessToken,
-                conversationId,
+                conversation,
                 progressBar,
                 chatPane,
+                conversationTree,
             ).execute()
         }
     }
