@@ -459,6 +459,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
 fun main() {
     if (System.getProperty("os.name") == "Linux") {
+        @Suppress("SpellCheckingInspection")
         UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
     } else {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())

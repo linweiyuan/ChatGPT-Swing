@@ -66,8 +66,6 @@ object Constant {
     const val TEXT_PLAIN = "text/plain"
     const val TEXT_HTML = "text/html"
 
-    const val DEFAULT_NEW_CONVERSATION_DISPLAY_TEXT = "+ New chat"
-
     const val ROLE_USER = "user"
 
     const val HTML_NEW_LINE = "<br />"
