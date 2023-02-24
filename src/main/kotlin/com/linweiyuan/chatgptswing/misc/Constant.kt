@@ -13,6 +13,7 @@ object Constant {
     const val TOKEN_RENEW_BEFORE_EXPIRATION_DAYS = 1L
 
     private const val SERVER_ADDRESS = "https://api.linweiyuan.com/chatgpt"
+
     const val URL_LOGIN = "$SERVER_ADDRESS/user/login"
     const val URL_RENEW_ACCESS_TOKEN = "$SERVER_ADDRESS/auth/session"
     const val URL_GET_CONVERSATION_LIST = "$SERVER_ADDRESS/conversations"
@@ -22,6 +23,7 @@ object Constant {
     const val URL_DELETE_CONVERSATION = "$SERVER_ADDRESS/conversation/%s"
     const val URL_RENAME_CONVERSATION = "$SERVER_ADDRESS/conversation/%s"
     const val URL_GEN_CONVERSATION_TITLE = "$SERVER_ADDRESS/conversation/gen_title/%s"
+    const val URL_ADD_MESSAGE_FEEDBACK = "$SERVER_ADDRESS/conversation/message_feedback"
 
     const val USERNAME = "Email"
     const val PASSWORD = "Password"
@@ -33,6 +35,12 @@ object Constant {
     const val LOGIN = "Login"
     const val CONTENT = "Content"
     const val REFRESH = "Refresh"
+    const val FEEDBACK = "Feedback"
+    const val FEEDBACK_LIKE = "Like"
+    const val FEEDBACK_CANCEL = "Cancel"
+    const val FEEDBACK_DISLIKE = "Dislike"
+    const val FEEDBACK_THUMBS_UP = "thumbsUp"
+    const val FEEDBACK_THUMBS_DOWN = "thumbsDown"
     const val TTS = "TTS"
     const val ABOUT = "About"
     const val GITHUB_REPO_URL = "https://github.com/linweiyuan/ChatGPT-Swing"

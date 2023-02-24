@@ -193,27 +193,31 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                 conversationTree.selectionPath = path
 
                 val currentNode = path.lastPathComponent as DefaultMutableTreeNode
+                // message
                 if (currentNode.parent != conversationTree.model.root) {
-                    return
-                }
-
-                val conversation = currentNode.userObject as Conversation
-
-                if (SwingUtilities.isMiddleMouseButton(e)) {
-                    GetConversationContentWorker(
-                        authSession.accessToken,
-                        conversation,
-                        progressBar,
-                        chatPane,
-                        conversationTree,
-                    ).execute()
-                } else if (SwingUtilities.isRightMouseButton(e)) {
-                    showPopupMenu(e, conversation)
+                    if (SwingUtilities.isRightMouseButton(e)) {
+                        val message = currentNode.userObject as Message
+                        showConversationMessagePopupMenu(e, message)
+                    }
+                } else {
+                    // conversation
+                    val conversation = currentNode.userObject as Conversation
+                    if (SwingUtilities.isMiddleMouseButton(e)) {
+                        GetConversationContentWorker(
+                            authSession.accessToken,
+                            conversation,
+                            progressBar,
+                            chatPane,
+                            conversationTree,
+                        ).execute()
+                    } else if (SwingUtilities.isRightMouseButton(e)) {
+                        showConversationPopupMenu(e, conversation)
+                    }
                 }
             }
 
-            private fun showPopupMenu(e: MouseEvent, conversation: Conversation) {
-                val conversationListPopupMenu = JPopupMenu().apply {
+            private fun showConversationPopupMenu(e: MouseEvent, conversation: Conversation) {
+                val conversationTreePopupMenu = JPopupMenu().apply {
                     add(JMenuItem(Constant.REFRESH).apply {
                         addActionListener {
                             GetConversationContentWorker(
@@ -267,7 +271,36 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                         }
                     })
                 }
-                conversationListPopupMenu.show(e.component, e.x, e.y)
+                conversationTreePopupMenu.show(e.component, e.x, e.y)
+            }
+
+            private fun showConversationMessagePopupMenu(e: MouseEvent, message: Message) {
+                JPopupMenu().apply {
+                    add(JMenuItem(Constant.FEEDBACK).apply {
+                        addActionListener {
+                            val option = JOptionPane.showOptionDialog(
+                                null,
+                                "Choose a feedback.",
+                                Constant.FEEDBACK,
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.INFORMATION_MESSAGE,
+                                null,
+                                arrayOf(Constant.FEEDBACK_LIKE, Constant.FEEDBACK_DISLIKE, Constant.FEEDBACK_CANCEL),
+                                null,
+                            )
+                            if (option == JOptionPane.CANCEL_OPTION) {
+                                return@addActionListener
+                            }
+
+                            val rating = if (option == JOptionPane.YES_OPTION) {
+                                Constant.FEEDBACK_THUMBS_UP
+                            } else {
+                                Constant.FEEDBACK_THUMBS_DOWN
+                            }
+                            FeedbackConversationWorker(authSession.accessToken, progressBar, message, rating).execute()
+                        }
+                    })
+                }.show(e.component, e.x, e.y)
             }
         })
 
