@@ -413,6 +413,14 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                 conversationTree
             ).execute()
         }
+
+        if (!firstTimeLogin) {
+            val expirationDate = ZonedDateTime.parse(authSession.expires)
+            val currentDate = ZonedDateTime.now(expirationDate.zone)
+            if (currentDate.isAfter(expirationDate.minusDays(Constant.TOKEN_RENEW_BEFORE_EXPIRATION_DAYS))) {
+                RenewAccessTokenWorker(authSession).execute()
+            }
+        }
     }
 }
 

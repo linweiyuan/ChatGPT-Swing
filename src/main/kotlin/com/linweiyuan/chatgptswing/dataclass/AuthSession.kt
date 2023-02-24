@@ -4,6 +4,7 @@ data class AuthSession(
     val user: User,
     val expires: String,
     val accessToken: String,
+    val cookies: String,
 )
 
 data class User(

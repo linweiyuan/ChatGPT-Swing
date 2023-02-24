@@ -1,16 +1,13 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.alibaba.fastjson2.JSONWriter
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.AuthSession
-import com.linweiyuan.chatgptswing.extensions.showErrorMessage
+import com.linweiyuan.chatgptswing.extensions.saveAccessToken
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import org.jsoup.Connection
 import org.jsoup.Jsoup
-import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import javax.swing.*
@@ -60,16 +57,7 @@ class LoginWorker(
                 .method(Connection.Method.POST)
                 .requestBody(JSON.toJSONString(mapOf("username" to username, "password" to password)))
                 .execute()
-            if (response.statusCode() != Constant.HTTP_OK) {
-                response.showErrorMessage()
-                return false
-            }
-
-            val authSession = JSON.parseObject(response.body(), AuthSession::class.java)
-            File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).writeText(
-                JSON.toJSONString(authSession, JSONWriter.Feature.PrettyFormat)
-            )
-            return true
+            return response.saveAccessToken()
         } catch (e: Exception) {
             e.toString().warn()
             return false

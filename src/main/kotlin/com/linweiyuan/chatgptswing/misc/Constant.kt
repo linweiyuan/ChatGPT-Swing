@@ -10,8 +10,11 @@ object Constant {
 
     const val AUTH_SESSION_FILE_NAME = ".chatgpt-swing.json"
 
+    const val TOKEN_RENEW_BEFORE_EXPIRATION_DAYS = 1L
+
     private const val SERVER_ADDRESS = "https://api.linweiyuan.com/chatgpt"
     const val URL_LOGIN = "$SERVER_ADDRESS/user/login"
+    const val URL_RENEW_ACCESS_TOKEN = "$SERVER_ADDRESS/auth/session"
     const val URL_GET_CONVERSATION_LIST = "$SERVER_ADDRESS/conversations"
     const val URL_GET_CONVERSATION_CONTENT = "$SERVER_ADDRESS/conversation/%s"
     const val URL_MAKE_CONVERSATION = "$SERVER_ADDRESS/conversation"
