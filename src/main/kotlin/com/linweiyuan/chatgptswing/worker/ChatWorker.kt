@@ -37,9 +37,9 @@ class ChatWorker(
         try {
             val messageId = UUID.randomUUID().toString()
             val requestMap = mapOf(
-                "messageId" to messageId,
-                "parentMessageId" to parentMessageId.ifBlank { UUID.randomUUID().toString() },
-                "conversationId" to conversationId.ifBlank { null },
+                "message_Id" to messageId,
+                "parent_message_id" to parentMessageId.ifBlank { UUID.randomUUID().toString() },
+                "conversation_id" to conversationId.ifBlank { null },
                 "content" to content,
             )
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
