@@ -2,10 +2,14 @@ package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.dataclass.*
-import com.linweiyuan.chatgptswing.extensions.*
+import com.linweiyuan.chatgptswing.extensions.getCurrentNode
+import com.linweiyuan.chatgptswing.extensions.showErrorMessage
+import com.linweiyuan.chatgptswing.extensions.useDefault
+import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.util.*
@@ -18,7 +22,7 @@ class ChatWorker(
     private val accessToken: String,
     private val progressBar: JProgressBar,
     private val contentField: JTextField,
-    private val chatPane: JTextPane,
+    private val textArea: RSyntaxTextArea,
     private val conversationTree: JTree
 ) : SwingWorker<Conversation, String>() {
 
@@ -34,12 +38,11 @@ class ChatWorker(
 
     override fun doInBackground(): Conversation? {
         val content = contentField.text.trim()
-        chatPane.contentType = Constant.TEXT_PLAIN
         progressBar.isIndeterminate = true
         contentField.isEditable = !contentField.isEditable
         contentField.text = ""
-        chatPane.border = BorderFactory.createTitledBorder(content)
-        chatPane.text = ""
+        textArea.border = BorderFactory.createTitledBorder(content)
+        textArea.text = ""
 
         try {
             val requestMap = mapOf(
@@ -121,7 +124,7 @@ class ChatWorker(
     }
 
     override fun process(chunks: MutableList<String>) {
-        chunks.forEach { chatPane.text = it }
+        chunks.forEach { textArea.text = it }
     }
 
     override fun done() {
@@ -131,7 +134,7 @@ class ChatWorker(
         val conversation = get()
         if (conversation != null) {
             if (IdUtil.getConversationId().isNotBlank()) {
-                CacheUtil.setMessage(messageId, chatPane.text.toHtml())
+                CacheUtil.setMessage(messageId, textArea.text)
 
                 with(conversationTreeModel) {
                     reload()

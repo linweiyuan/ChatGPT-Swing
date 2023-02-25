@@ -10,7 +10,7 @@ data class Message(
     val author: Author,
     val content: Content,
 ) {
-    override fun toString() = content.parts[0]
+    override fun toString() = content.parts[0].trim()
 }
 
 data class Author(

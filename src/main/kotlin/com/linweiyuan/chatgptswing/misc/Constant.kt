@@ -63,13 +63,9 @@ object Constant {
     const val CONTENT_TYPE = "Content-Type"
     const val APPLICATION_JSON = "application/json"
     const val AUTHORIZATION = "Authorization"
-    const val TEXT_PLAIN = "text/plain"
-    const val TEXT_HTML = "text/html"
 
     const val MESSAGE_CONTENT_TYPE_TEXT = "text"
     const val ROLE_USER = "user"
-
-    const val HTML_NEW_LINE = "<br />"
 
     const val GREETING_CHINESE = "你好，我是%s，请问你叫什么名字？"
     const val GREETING_ENGLITH = "Hello, I am %s, may I have your name?"

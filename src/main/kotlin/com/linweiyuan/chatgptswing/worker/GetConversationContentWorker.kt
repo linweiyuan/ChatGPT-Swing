@@ -5,13 +5,16 @@ import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.ConversationContentResponse
 import com.linweiyuan.chatgptswing.dataclass.ConversationDetail
 import com.linweiyuan.chatgptswing.dataclass.Message
-import com.linweiyuan.chatgptswing.extensions.*
+import com.linweiyuan.chatgptswing.extensions.getCurrentNode
+import com.linweiyuan.chatgptswing.extensions.showErrorMessage
+import com.linweiyuan.chatgptswing.extensions.useDefault
+import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Jsoup
 import javax.swing.JProgressBar
-import javax.swing.JTextPane
 import javax.swing.JTree
 import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
@@ -22,18 +25,18 @@ class GetConversationContentWorker(
     private val accessToken: String,
     private val conversation: Conversation,
     private val progressBar: JProgressBar,
-    private val chatPane: JTextPane,
+    private val textArea: RSyntaxTextArea,
     private val conversationTree: JTree,
 ) : SwingWorker<Boolean, Message>() {
 
-    private val contentBuilder = StringBuilder()
+    private val messages = mutableListOf<Message>()
     private val conversationTreeModel = conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
     private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversation.id)
 
     override fun doInBackground(): Boolean {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
-        chatPane.border = null
+        textArea.border = null
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
@@ -81,8 +84,7 @@ class GetConversationContentWorker(
                     // if start a new conversation, currentTreeNode is null
                     currentTreeNode?.add(DefaultMutableTreeNode(it))
                 }
-                contentBuilder.append(content)
-                contentBuilder.append(Constant.HTML_NEW_LINE).append(Constant.HTML_NEW_LINE) // need twice
+                messages.add(it)
             }
         }
     }
@@ -92,11 +94,10 @@ class GetConversationContentWorker(
 
         val ok = get()
         if (ok) {
-            val html = contentBuilder.toString().toHtml()
-            chatPane.contentType = Constant.TEXT_HTML
-            chatPane.text = html
+            val text = messages.joinToString(separator = "\n\n")
+            textArea.text = text
 
-            CacheUtil.setConversation(conversation.id, html)
+            CacheUtil.setConversation(conversation.id, text)
 
             with(conversationTreeModel) {
                 reload()

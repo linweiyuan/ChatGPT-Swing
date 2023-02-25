@@ -6,7 +6,7 @@ data class Conversation(
     val id: String,
     val title: String,
 ) {
-    override fun toString() = title
+    override fun toString() = title.trim()
 }
 
 data class ConversationListResponse(

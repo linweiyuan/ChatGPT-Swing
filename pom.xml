@@ -19,8 +19,8 @@
         <kotlin.version>1.8.0</kotlin.version>
         <jsoup.version>1.15.3</jsoup.version>
         <fastjson2.version>2.0.24</fastjson2.version>
-        <commonmark.version>0.21.0</commonmark.version>
         <jlayer.version>1.0.1.4</jlayer.version>
+        <rsyntaxtextarea.version>3.3.2</rsyntaxtextarea.version>
     </properties>
 
     <dependencies>
@@ -48,12 +48,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.commonmark</groupId>
-            <artifactId>commonmark</artifactId>
-            <version>${commonmark.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.googlecode.soundlibs</groupId>
             <artifactId>jlayer</artifactId>
             <version>${jlayer.version}</version>
@@ -63,6 +57,12 @@
                     <artifactId>junit</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>${rsyntaxtextarea.version}</version>
         </dependency>
     </dependencies>
 

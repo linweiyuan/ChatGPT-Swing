@@ -10,6 +10,10 @@ import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import com.linweiyuan.chatgptswing.worker.*
+import org.fife.ui.rsyntaxtextarea.FileTypeUtil
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants
+import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -142,8 +146,22 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
         val progressBar = JProgressBar()
 
-        val chatPane = JTextPane().apply {
+        val textArea = RSyntaxTextArea().apply {
+            isCodeFoldingEnabled = true
+            highlightCurrentLine = false
+            paintTabLines = true
+            lineWrap = true
+            antiAliasingEnabled = true
             isEditable = false
+        }
+
+        val languages = FileTypeUtil.get().defaultContentTypeToFilterMap.keys.sorted().toTypedArray()
+        val languageComboBox = JComboBox(languages).apply {
+            addItemListener {
+                val selected = it.item as String
+                textArea.syntaxEditingStyle = selected
+            }
+            selectedItem = SyntaxConstants.SYNTAX_STYLE_JAVA
         }
 
         val conversationTreeModel = DefaultTreeModel(DefaultMutableTreeNode("ROOT"))
@@ -155,15 +173,14 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                     return@addTreeSelectionListener
                 }
 
-                chatPane.border = null
-                chatPane.contentType = Constant.TEXT_HTML
+                textArea.border = null
 
                 val currentNode = it.path.lastPathComponent as DefaultMutableTreeNode
                 val rootNode = conversationTreeModel.root
                 // the message node
                 if (currentNode.parent != null && currentNode.parent != rootNode) {
                     val message = currentNode.userObject as Message
-                    chatPane.text = CacheUtil.getMessage(message.id)
+                    textArea.text = CacheUtil.getMessage(message.id)
                 } else {
                     // the conversation node
                     val conversation = currentNode.userObject as Conversation
@@ -177,11 +194,11 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             authSession.accessToken,
                             conversation,
                             progressBar,
-                            chatPane,
+                            textArea,
                             this,
                         ).execute()
                     } else {
-                        chatPane.text = text
+                        textArea.text = text
                     }
                 }
             }
@@ -208,7 +225,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             authSession.accessToken,
                             conversation,
                             progressBar,
-                            chatPane,
+                            textArea,
                             conversationTree,
                         ).execute()
                     } else if (SwingUtilities.isRightMouseButton(e)) {
@@ -225,7 +242,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                                 authSession.accessToken,
                                 conversation,
                                 progressBar,
-                                chatPane,
+                                textArea,
                                 conversationTree,
                             ).execute()
                         }
@@ -317,8 +334,8 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
                 add(JButton(Constant.NEW).apply {
                     addActionListener {
-                        chatPane.border = null
-                        chatPane.text = ""
+                        textArea.border = null
+                        textArea.text = ""
                         IdUtil.clearIds()
                         conversationTree.clearSelection()
                     }
@@ -355,7 +372,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                     authSession.accessToken,
                     progressBar,
                     this,
-                    chatPane,
+                    textArea,
                     conversationTree
                 ).execute()
             }
@@ -374,17 +391,23 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                 weighty = -1.0
             })
 
-            add(JScrollPane(chatPane).apply {
+            add(languageComboBox, gridBagConstraints.apply {
+                gridx = 0
+                gridy = 1
+                weighty = -1.0
+            })
+
+            add(RTextScrollPane(textArea).apply {
                 horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
             }, gridBagConstraints.apply {
                 gridx = 0
-                gridy = 1
+                gridy = 2
                 weighty = 1.0
             })
 
             val ttsButton = JButton(Constant.TTS).apply {
                 addActionListener {
-                    val text = chatPane.selectedText
+                    val text = textArea.selectedText
                     if (text.isBlank()) {
                         "Please select some texts first.".warn()
                         return@addActionListener
@@ -395,7 +418,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
             }
             add(ttsButton, gridBagConstraints.apply {
                 gridx = 0
-                gridy = 2
+                gridy = 3
                 weighty = -1.0
             })
         }
@@ -443,7 +466,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                 authSession.accessToken,
                 progressBar,
                 contentField,
-                chatPane,
+                textArea,
                 conversationTree
             ).execute()
         }
