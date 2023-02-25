@@ -1,6 +1,7 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.Message
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
@@ -10,18 +11,17 @@ import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import javax.swing.JOptionPane
-import javax.swing.JProgressBar
 import javax.swing.SwingWorker
 
 class FeedbackConversationWorker(
     private val accessToken: String,
-    private val progressBar: JProgressBar,
     private val message: Message,
     private val rating: String,
+    private val mainFrame: MainFrame,
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken)
@@ -50,7 +50,7 @@ class FeedbackConversationWorker(
     }
 
     override fun done() {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
         val ok = get()
         if (ok) {

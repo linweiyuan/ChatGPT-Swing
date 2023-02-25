@@ -1,6 +1,7 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.*
 import com.linweiyuan.chatgptswing.extensions.getCurrentNode
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
@@ -9,27 +10,25 @@ import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.util.*
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.SwingUtilities
+import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 class ChatWorker(
     private val accessToken: String,
-    private val progressBar: JProgressBar,
-    private val contentField: JTextField,
-    private val textArea: RSyntaxTextArea,
-    private val conversationTree: JTree
+    private val mainFrame: MainFrame,
 ) : SwingWorker<Conversation, String>() {
 
     private var conversationId = IdUtil.getConversationId()
     private var parentMessageId = IdUtil.getParentMessageId()
 
-    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeModel = mainFrame.conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
     private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversationId)
 
@@ -37,12 +36,12 @@ class ChatWorker(
     private val messageId = UUID.randomUUID().toString()
 
     override fun doInBackground(): Conversation? {
-        val content = contentField.text.trim()
-        progressBar.isIndeterminate = true
-        contentField.isEditable = !contentField.isEditable
-        contentField.text = ""
-        textArea.border = BorderFactory.createTitledBorder(content)
-        textArea.text = ""
+        val content = mainFrame.contentField.text.trim()
+        mainFrame.progressBar.isIndeterminate = true
+        mainFrame.contentField.isEditable = !mainFrame.contentField.isEditable
+        mainFrame.contentField.text = ""
+        mainFrame.textArea.border = BorderFactory.createTitledBorder(content)
+        mainFrame.textArea.text = ""
 
         try {
             val requestMap = mapOf(
@@ -106,13 +105,7 @@ class ChatWorker(
 
             if (IdUtil.getConversationId().isBlank()) {
                 SwingUtilities.invokeLater {
-                    GenTitleWorker(
-                        accessToken,
-                        conversationId,
-                        messageId,
-                        progressBar,
-                        conversationTree,
-                    ).execute()
+                    GenTitleWorker(accessToken, conversationId, messageId, mainFrame).execute()
                 }
             }
 
@@ -124,21 +117,21 @@ class ChatWorker(
     }
 
     override fun process(chunks: MutableList<String>) {
-        chunks.forEach { textArea.text = it }
+        chunks.forEach { mainFrame.textArea.text = it }
     }
 
     override fun done() {
-        progressBar.isIndeterminate = false
-        contentField.isEditable = !contentField.isEditable
+        mainFrame.progressBar.isIndeterminate = false
+        mainFrame.contentField.isEditable = !mainFrame.contentField.isEditable
 
         val conversation = get()
         if (conversation != null) {
             if (IdUtil.getConversationId().isNotBlank()) {
-                CacheUtil.setMessage(messageId, textArea.text)
+                CacheUtil.setMessage(messageId, mainFrame.textArea.text)
 
                 with(conversationTreeModel) {
                     reload()
-                    conversationTree.selectionPath = TreePath(getPathToRoot(newMessageNode))
+                    mainFrame.conversationTree.selectionPath = TreePath(getPathToRoot(newMessageNode))
                 }
             }
         }

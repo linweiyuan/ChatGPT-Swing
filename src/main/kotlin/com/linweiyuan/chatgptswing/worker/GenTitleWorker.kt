@@ -1,6 +1,7 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.GenerateTitleResponse
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
@@ -10,8 +11,6 @@ import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
-import javax.swing.JProgressBar
-import javax.swing.JTree
 import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -21,11 +20,10 @@ class GenTitleWorker(
     private val accessToken: String,
     private val conversationId: String,
     private val messageId: String,
-    private val progressBar: JProgressBar,
-    private val conversationTree: JTree,
+    private val mainFrame: MainFrame,
 ) : SwingWorker<DefaultMutableTreeNode, String>() {
 
-    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeModel = mainFrame.conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
 
     override fun doInBackground(): DefaultMutableTreeNode? {
@@ -52,13 +50,13 @@ class GenTitleWorker(
     }
 
     override fun done() {
-        progressBar.isIndeterminate = false
+        mainFrame.progressBar.isIndeterminate = false
 
         val node = get()
         if (node != null) {
             with(conversationTreeModel) {
                 reload()
-                conversationTree.selectionPath = TreePath(getPathToRoot(node))
+                mainFrame.conversationTree.selectionPath = TreePath(getPathToRoot(node))
             }
         }
     }

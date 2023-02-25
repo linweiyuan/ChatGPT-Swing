@@ -1,29 +1,25 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.Message
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Connection
 import org.jsoup.Jsoup
-import javax.swing.JProgressBar
-import javax.swing.JTree
 import javax.swing.SwingWorker
 
 class RenameConversationTitleWorker(
     private val accessToken: String,
     private val conversationId: String,
     private val title: String,
-    private val progressBar: JProgressBar,
-    private val conversationTree: JTree,
-    private val textArea: RSyntaxTextArea,
+    private val mainFrame: MainFrame,
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken)
@@ -44,9 +40,9 @@ class RenameConversationTitleWorker(
     }
 
     override fun done() {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
-        GetConversationListWorker(accessToken, progressBar, conversationTree, textArea).execute()
+        GetConversationListWorker(accessToken, mainFrame).execute()
     }
 
 }

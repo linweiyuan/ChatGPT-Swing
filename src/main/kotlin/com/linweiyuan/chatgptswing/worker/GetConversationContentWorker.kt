@@ -1,6 +1,7 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.ConversationContentResponse
 import com.linweiyuan.chatgptswing.dataclass.ConversationDetail
 import com.linweiyuan.chatgptswing.dataclass.Message
@@ -11,10 +12,7 @@ import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Jsoup
-import javax.swing.JProgressBar
-import javax.swing.JTree
 import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -23,19 +21,17 @@ import javax.swing.tree.TreePath
 class GetConversationContentWorker(
     private val accessToken: String,
     private val conversationId: String,
-    private val progressBar: JProgressBar,
-    private val conversationTree: JTree,
-    private val textArea: RSyntaxTextArea,
+    private val mainFrame: MainFrame,
 ) : SwingWorker<Boolean, Message>() {
 
     private val messages = mutableListOf<Message>()
-    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeModel = mainFrame.conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
     private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversationId)
 
     override fun doInBackground(): Boolean {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
-        textArea.border = null
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
+        mainFrame.textArea.border = null
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
@@ -89,12 +85,12 @@ class GetConversationContentWorker(
     }
 
     override fun done() {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
         val ok = get()
         if (ok) {
             val text = messages.joinToString(separator = "\n\n")
-            textArea.text = text
+            mainFrame.textArea.text = text
 
             CacheUtil.setConversation(conversationId, text)
 
@@ -103,7 +99,7 @@ class GetConversationContentWorker(
                 val conversationId = IdUtil.getConversationId()
                 if (conversationId.isNotBlank()) {
                     val highlightedNode = conversationTreeRoot.getCurrentNode(conversationId)
-                    conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
+                    mainFrame.conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
                 }
             }
         }

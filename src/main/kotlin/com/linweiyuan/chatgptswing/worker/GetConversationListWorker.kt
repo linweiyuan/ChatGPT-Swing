@@ -1,6 +1,7 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.ConversationListResponse
 import com.linweiyuan.chatgptswing.extensions.getCurrentNode
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
@@ -8,10 +9,7 @@ import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Jsoup
-import javax.swing.JProgressBar
-import javax.swing.JTree
 import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -19,16 +17,14 @@ import javax.swing.tree.TreePath
 
 class GetConversationListWorker(
     private val accessToken: String,
-    private val progressBar: JProgressBar,
-    private val conversationTree: JTree,
-    private val textArea: RSyntaxTextArea,
+    private val mainFrame: MainFrame,
 ) : SwingWorker<Boolean, Void>() {
 
-    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeModel = mainFrame.conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
 
     override fun doInBackground(): Boolean {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken).url(Constant.URL_GET_CONVERSATION_LIST).execute()
@@ -50,24 +46,18 @@ class GetConversationListWorker(
     }
 
     override fun done() {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
 
         val ok = get()
         if (ok) {
-            textArea.text = null
+            mainFrame.textArea.text = null
             with(conversationTreeModel) {
                 reload()
                 val conversationId = IdUtil.getConversationId()
                 if (conversationId.isNotBlank()) {
                     val highlightedNode = conversationTreeRoot.getCurrentNode(conversationId)
-                    conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
-                    GetConversationContentWorker(
-                        accessToken,
-                        conversationId,
-                        progressBar,
-                        conversationTree,
-                        textArea,
-                    ).execute()
+                    mainFrame.conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
+                    GetConversationContentWorker(accessToken, conversationId, mainFrame).execute()
                 }
             }
         }

@@ -10,18 +10,9 @@ import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.net.InetSocketAddress
 import java.net.Proxy
-import javax.swing.*
+import javax.swing.SwingWorker
 
-class LoginWorker(
-    private val progressBar: JProgressBar,
-    private val usernameField: JTextField,
-    private val passwordField: JPasswordField,
-    private val proxyHostField: JTextField,
-    private val proxyPortField: JTextField,
-    private val buttonGroup: ButtonGroup,
-    private val loginButton: JButton,
-    private val mainFrame: JFrame,
-) : SwingWorker<Boolean, Void>() {
+class LoginWorker(private val mainFrame: MainFrame) : SwingWorker<Boolean, Void>() {
 
     override fun doInBackground(): Boolean {
         updateUI()
@@ -30,16 +21,16 @@ class LoginWorker(
             val connection = Jsoup.newSession().useDefault()
 
             // only login needs proxy to check whether the country is supported
-            val proxyHost = proxyHostField.text.trim()
-            val proxyPort = proxyPortField.text.trim()
-            val actionCommand = buttonGroup.selection.actionCommand
+            val proxyHost = mainFrame.proxyHostField.text.trim()
+            val proxyPort = mainFrame.proxyPortField.text.trim()
+            val actionCommand = mainFrame.buttonGroup.selection.actionCommand
             if (actionCommand != Constant.PROXY_TYPE_NONE) {
                 if (proxyHost.isBlank() || proxyPort.isBlank()) {
                     "Please input proxy host and proxy port.".warn()
                     return false
                 }
 
-                when (buttonGroup.selection.actionCommand) {
+                when (mainFrame.buttonGroup.selection.actionCommand) {
                     Constant.PROXY_TYPE_HTTP -> {
                         connection.proxy(proxyHost, proxyPort.toInt())
                     }
@@ -50,8 +41,8 @@ class LoginWorker(
                 }
             }
 
-            val username = usernameField.text
-            val password = String(passwordField.password)
+            val username = mainFrame.usernameField.text
+            val password = String(mainFrame.passwordField.password)
             val response = connection.newRequest()
                 .url(Constant.URL_LOGIN)
                 .method(Connection.Method.POST)
@@ -75,12 +66,12 @@ class LoginWorker(
     }
 
     private fun updateUI() {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
-        usernameField.isEditable = !usernameField.isEditable
-        passwordField.isEditable = !passwordField.isEditable
-        proxyHostField.isEditable = !proxyHostField.isEditable
-        proxyPortField.isEditable = !proxyPortField.isEditable
-        loginButton.isEnabled = !loginButton.isEnabled
+        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
+        mainFrame.usernameField.isEditable = !mainFrame.usernameField.isEditable
+        mainFrame.passwordField.isEditable = !mainFrame.passwordField.isEditable
+        mainFrame.proxyHostField.isEditable = !mainFrame.proxyHostField.isEditable
+        mainFrame.proxyPortField.isEditable = !mainFrame.proxyPortField.isEditable
+        mainFrame.loginButton.isEnabled = !mainFrame.loginButton.isEnabled
     }
 
 }
