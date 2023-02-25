@@ -8,6 +8,7 @@ import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Jsoup
 import javax.swing.JProgressBar
 import javax.swing.JTree
@@ -20,6 +21,7 @@ class GetConversationListWorker(
     private val accessToken: String,
     private val progressBar: JProgressBar,
     private val conversationTree: JTree,
+    private val textArea: RSyntaxTextArea,
 ) : SwingWorker<Boolean, Void>() {
 
     private val conversationTreeModel = conversationTree.model as DefaultTreeModel
@@ -52,12 +54,20 @@ class GetConversationListWorker(
 
         val ok = get()
         if (ok) {
+            textArea.text = null
             with(conversationTreeModel) {
                 reload()
                 val conversationId = IdUtil.getConversationId()
                 if (conversationId.isNotBlank()) {
                     val highlightedNode = conversationTreeRoot.getCurrentNode(conversationId)
                     conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
+                    GetConversationContentWorker(
+                        accessToken,
+                        conversationId,
+                        progressBar,
+                        conversationTree,
+                        textArea,
+                    ).execute()
                 }
             }
         }

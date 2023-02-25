@@ -6,6 +6,7 @@ import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import javax.swing.JProgressBar
@@ -18,6 +19,7 @@ class RenameConversationTitleWorker(
     private val title: String,
     private val progressBar: JProgressBar,
     private val conversationTree: JTree,
+    private val textArea: RSyntaxTextArea,
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
@@ -44,7 +46,7 @@ class RenameConversationTitleWorker(
     override fun done() {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
 
-        GetConversationListWorker(accessToken, progressBar, conversationTree).execute()
+        GetConversationListWorker(accessToken, progressBar, conversationTree, textArea).execute()
     }
 
 }

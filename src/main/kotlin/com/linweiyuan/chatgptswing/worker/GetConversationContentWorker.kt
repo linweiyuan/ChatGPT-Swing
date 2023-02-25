@@ -1,7 +1,6 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.ConversationContentResponse
 import com.linweiyuan.chatgptswing.dataclass.ConversationDetail
 import com.linweiyuan.chatgptswing.dataclass.Message
@@ -23,16 +22,16 @@ import javax.swing.tree.TreePath
 
 class GetConversationContentWorker(
     private val accessToken: String,
-    private val conversation: Conversation,
+    private val conversationId: String,
     private val progressBar: JProgressBar,
-    private val textArea: RSyntaxTextArea,
     private val conversationTree: JTree,
+    private val textArea: RSyntaxTextArea,
 ) : SwingWorker<Boolean, Message>() {
 
     private val messages = mutableListOf<Message>()
     private val conversationTreeModel = conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
-    private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversation.id)
+    private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversationId)
 
     override fun doInBackground(): Boolean {
         progressBar.isIndeterminate = !progressBar.isIndeterminate
@@ -40,7 +39,7 @@ class GetConversationContentWorker(
 
         try {
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
-                .url(String.format(Constant.URL_GET_CONVERSATION_CONTENT, conversation.id))
+                .url(String.format(Constant.URL_GET_CONVERSATION_CONTENT, conversationId))
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
@@ -97,7 +96,7 @@ class GetConversationContentWorker(
             val text = messages.joinToString(separator = "\n\n")
             textArea.text = text
 
-            CacheUtil.setConversation(conversation.id, text)
+            CacheUtil.setConversation(conversationId, text)
 
             with(conversationTreeModel) {
                 reload()

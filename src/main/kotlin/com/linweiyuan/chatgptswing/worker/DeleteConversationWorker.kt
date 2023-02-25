@@ -7,6 +7,7 @@ import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import javax.swing.JProgressBar
@@ -18,6 +19,7 @@ class DeleteConversationWorker(
     private val conversationId: String,
     private val progressBar: JProgressBar,
     private val conversationTree: JTree,
+    private val textArea: RSyntaxTextArea,
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
@@ -47,7 +49,7 @@ class DeleteConversationWorker(
         val ok = get()
         if (ok) {
             IdUtil.clearIds()
-            GetConversationListWorker(accessToken, progressBar, conversationTree).execute()
+            GetConversationListWorker(accessToken, progressBar, conversationTree, textArea).execute()
         }
     }
 

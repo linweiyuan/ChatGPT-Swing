@@ -192,10 +192,10 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                     if (text.isNullOrBlank()) {
                         GetConversationContentWorker(
                             authSession.accessToken,
-                            conversation,
+                            conversation.id,
                             progressBar,
-                            textArea,
                             this,
+                            textArea,
                         ).execute()
                     } else {
                         textArea.text = text
@@ -223,10 +223,10 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                     if (SwingUtilities.isMiddleMouseButton(e)) {
                         GetConversationContentWorker(
                             authSession.accessToken,
-                            conversation,
+                            conversation.id,
                             progressBar,
-                            textArea,
                             conversationTree,
+                            textArea,
                         ).execute()
                     } else if (SwingUtilities.isRightMouseButton(e)) {
                         showConversationPopupMenu(e, conversation)
@@ -240,10 +240,10 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                         addActionListener {
                             GetConversationContentWorker(
                                 authSession.accessToken,
-                                conversation,
+                                conversation.id,
                                 progressBar,
-                                textArea,
                                 conversationTree,
+                                textArea,
                             ).execute()
                         }
                     })
@@ -268,6 +268,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                                 title,
                                 progressBar,
                                 conversationTree,
+                                textArea,
                             ).execute()
                         }
                     })
@@ -285,6 +286,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                                 conversationId,
                                 progressBar,
                                 conversationTree,
+                                textArea,
                             ).execute()
                         }
                     })
@@ -346,6 +348,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             authSession.accessToken,
                             progressBar,
                             conversationTree,
+                            textArea,
                         ).execute()
                     }
                 })
@@ -360,6 +363,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             authSession.accessToken,
                             progressBar,
                             conversationTree,
+                            textArea,
                         ).execute()
                     }
                 })
@@ -453,7 +457,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
         size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
 
-        GetConversationListWorker(authSession.accessToken, progressBar, conversationTree).execute()
+        GetConversationListWorker(authSession.accessToken, progressBar, conversationTree, textArea).execute()
 
         if (firstTimeLogin) {
             val username = System.getProperty("user.name")
