@@ -408,7 +408,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
             val ttsButton = JButton(Constant.TTS).apply {
                 addActionListener {
                     val text = textArea.selectedText
-                    if (text.isBlank()) {
+                    if (text == null) {
                         "Please select some texts first.".warn()
                         return@addActionListener
                     }
