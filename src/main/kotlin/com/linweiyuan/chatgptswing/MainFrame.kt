@@ -155,6 +155,9 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                     return@addTreeSelectionListener
                 }
 
+                chatPane.border = null
+                chatPane.contentType = Constant.TEXT_HTML
+
                 val currentNode = it.path.lastPathComponent as DefaultMutableTreeNode
                 val rootNode = conversationTreeModel.root
                 // the message node
@@ -178,10 +181,8 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             this,
                         ).execute()
                     } else {
-                        chatPane.contentType = Constant.TEXT_HTML
                         chatPane.text = text
                     }
-                    chatPane.text = text
                 }
             }
         }

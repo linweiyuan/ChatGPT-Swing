@@ -76,12 +76,14 @@ class GetConversationContentWorker(
     override fun process(chunks: MutableList<Message>) {
         chunks.forEach {
             val content = it.content.parts[0]
-            if (it.author.role == Constant.ROLE_USER) {
-                // if start a new conversation, currentTreeNode is null
-                currentTreeNode?.add(DefaultMutableTreeNode(it))
+            if (content.isNotBlank()) {
+                if (it.author.role == Constant.ROLE_USER) {
+                    // if start a new conversation, currentTreeNode is null
+                    currentTreeNode?.add(DefaultMutableTreeNode(it))
+                }
+                contentBuilder.append(content)
+                contentBuilder.append(Constant.HTML_NEW_LINE).append(Constant.HTML_NEW_LINE) // need twice
             }
-            contentBuilder.append(content)
-            contentBuilder.append(Constant.HTML_NEW_LINE).append(Constant.HTML_NEW_LINE) // need twice
         }
     }
 

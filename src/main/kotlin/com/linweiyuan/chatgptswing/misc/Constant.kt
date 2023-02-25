@@ -66,6 +66,7 @@ object Constant {
     const val TEXT_PLAIN = "text/plain"
     const val TEXT_HTML = "text/html"
 
+    const val MESSAGE_CONTENT_TYPE_TEXT = "text"
     const val ROLE_USER = "user"
 
     const val HTML_NEW_LINE = "<br />"

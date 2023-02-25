@@ -1,18 +1,18 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.ChatResponse
-import com.linweiyuan.chatgptswing.dataclass.Conversation
-import com.linweiyuan.chatgptswing.extensions.showErrorMessage
-import com.linweiyuan.chatgptswing.extensions.toHtml
-import com.linweiyuan.chatgptswing.extensions.useDefault
-import com.linweiyuan.chatgptswing.extensions.warn
+import com.linweiyuan.chatgptswing.dataclass.*
+import com.linweiyuan.chatgptswing.extensions.*
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.util.*
 import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 class ChatWorker(
     private val accessToken: String,
@@ -25,6 +25,13 @@ class ChatWorker(
     private var conversationId = IdUtil.getConversationId()
     private var parentMessageId = IdUtil.getParentMessageId()
 
+    private val conversationTreeModel = conversationTree.model as DefaultTreeModel
+    private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
+    private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversationId)
+
+    private lateinit var newMessageNode: DefaultMutableTreeNode
+    private val messageId = UUID.randomUUID().toString()
+
     override fun doInBackground(): Conversation? {
         val content = contentField.text.trim()
         chatPane.contentType = Constant.TEXT_PLAIN
@@ -35,7 +42,6 @@ class ChatWorker(
         chatPane.text = ""
 
         try {
-            val messageId = UUID.randomUUID().toString()
             val requestMap = mapOf(
                 "message_Id" to messageId,
                 "parent_message_id" to parentMessageId.ifBlank { UUID.randomUUID().toString() },
@@ -50,6 +56,17 @@ class ChatWorker(
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
                 return null
+            }
+
+            currentTreeNode?.let {
+                newMessageNode = DefaultMutableTreeNode(
+                    Message(
+                        messageId,
+                        Author(Constant.ROLE_USER),
+                        Content(Constant.MESSAGE_CONTENT_TYPE_TEXT, mutableListOf(content))
+                    )
+                )
+                it.add(newMessageNode)
             }
 
             response.bodyStream().bufferedReader().use {
@@ -111,19 +128,16 @@ class ChatWorker(
         progressBar.isIndeterminate = false
         contentField.isEditable = !contentField.isEditable
 
-        val html = chatPane.text.toHtml()
-        chatPane.contentType = Constant.TEXT_HTML // this line will clear all contents
-        chatPane.text = html
-
         val conversation = get()
         if (conversation != null) {
-            GetConversationContentWorker(
-                accessToken,
-                conversation,
-                progressBar,
-                chatPane,
-                conversationTree,
-            ).execute()
+            if (IdUtil.getConversationId().isNotBlank()) {
+                CacheUtil.setMessage(messageId, chatPane.text.toHtml())
+
+                with(conversationTreeModel) {
+                    reload()
+                    conversationTree.selectionPath = TreePath(getPathToRoot(newMessageNode))
+                }
+            }
         }
     }
 
