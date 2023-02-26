@@ -37,7 +37,7 @@ class ChatWorker(
     override fun doInBackground(): Conversation? {
         try {
             val requestMap = mapOf(
-                "message_Id" to messageId,
+                "message_id" to messageId,
                 "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
                 "conversation_id" to conversationId.ifBlank { null },
                 "content" to content,
