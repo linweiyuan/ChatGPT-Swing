@@ -522,9 +522,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
             SwingUtilities.invokeLater {
                 ChatWorker(authSession.accessToken, content, this).execute()
             }
-        }
-
-        if (!firstTimeLogin) {
+        } else {
             val expirationDate = ZonedDateTime.parse(authSession.expires)
             val currentDate = ZonedDateTime.now(expirationDate.zone)
             if (currentDate.isAfter(expirationDate.minusDays(Constant.TOKEN_RENEW_BEFORE_EXPIRATION_DAYS))) {
