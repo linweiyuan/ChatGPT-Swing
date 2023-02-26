@@ -26,7 +26,6 @@ class ChatWorker(
 ) : SwingWorker<Conversation, String>() {
 
     private var conversationId = IdUtil.getConversationId()
-    private var parentMessageId = IdUtil.getParentMessageId()
 
     private val conversationTreeModel = mainFrame.conversationTree.model as DefaultTreeModel
     private val conversationTreeRoot = conversationTreeModel.root as DefaultMutableTreeNode
@@ -39,10 +38,11 @@ class ChatWorker(
         try {
             val requestMap = mapOf(
                 "message_Id" to messageId,
-                "parent_message_id" to parentMessageId.ifBlank { UUID.randomUUID().toString() },
+                "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
                 "conversation_id" to conversationId.ifBlank { null },
                 "content" to content,
             )
+            IdUtil.setParentMessageId("")
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
                 .url(Constant.URL_MAKE_CONVERSATION)
                 .method(Connection.Method.POST)
@@ -84,7 +84,7 @@ class ChatWorker(
                     if (conversationId.isBlank()) {
                         conversationId = chatResponse.conversationId
                     }
-                    if (parentMessageId.isBlank()) {
+                    if (IdUtil.getParentMessageId().isBlank()) {
                         IdUtil.setParentMessageId(chatResponse.message.id)
                     }
                     val part = chatResponse.message.content.parts[0]
