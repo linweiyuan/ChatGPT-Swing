@@ -14,6 +14,7 @@ class RenewAccessTokenWorker(
     override fun doInBackground() = try {
         val response = Jsoup.connect(Constant.URL_RENEW_ACCESS_TOKEN)
             .ignoreContentType(true)
+            .ignoreHttpErrors(true)
             .header("Cookie", authSession.cookies)
             .execute()
         response.saveAccessToken()
