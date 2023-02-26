@@ -8,6 +8,7 @@ import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
 import javax.swing.SwingUtilities
@@ -35,6 +36,7 @@ class GetConversationListWorker(
             conversationTreeRoot.removeAllChildren()
             JSON.parseObject(response.body(), ConversationListResponse::class.java).items.forEach {
                 conversationTreeRoot.add(DefaultMutableTreeNode(it))
+                CacheUtil.setConversation(it.id, "")
             }
 
             return true

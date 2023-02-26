@@ -123,6 +123,7 @@ class ChatWorker(
 
             if (IdUtil.getConversationId().isNotBlank()) {
                 CacheUtil.setMessage(messageId, mainFrame.textArea.text)
+                CacheUtil.setConversation(conversationId, "") // force it to reload to get new messages
 
                 with(conversationTreeModel) {
                     reload()
