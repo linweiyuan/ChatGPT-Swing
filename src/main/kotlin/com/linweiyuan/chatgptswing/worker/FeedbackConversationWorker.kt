@@ -21,8 +21,6 @@ class FeedbackConversationWorker(
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
-
         try {
             val response = Jsoup.newSession().useDefault(accessToken)
                 .url(Constant.URL_ADD_MESSAGE_FEEDBACK)
@@ -50,7 +48,7 @@ class FeedbackConversationWorker(
     }
 
     override fun done() {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = false
 
         val ok = get()
         if (ok) {

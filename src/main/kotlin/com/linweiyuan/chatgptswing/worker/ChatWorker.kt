@@ -13,7 +13,6 @@ import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.util.*
-import javax.swing.BorderFactory
 import javax.swing.SwingUtilities
 import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
@@ -22,6 +21,7 @@ import javax.swing.tree.TreePath
 
 class ChatWorker(
     private val accessToken: String,
+    private val content: String,
     private val mainFrame: MainFrame,
 ) : SwingWorker<Conversation, String>() {
 
@@ -36,13 +36,6 @@ class ChatWorker(
     private val messageId = UUID.randomUUID().toString()
 
     override fun doInBackground(): Conversation? {
-        val content = mainFrame.contentField.text.trim()
-        mainFrame.progressBar.isIndeterminate = true
-        mainFrame.contentField.isEditable = !mainFrame.contentField.isEditable
-        mainFrame.contentField.text = ""
-        mainFrame.textArea.border = BorderFactory.createTitledBorder(content)
-        mainFrame.textArea.text = ""
-
         try {
             val requestMap = mapOf(
                 "message_Id" to messageId,
@@ -122,10 +115,12 @@ class ChatWorker(
 
     override fun done() {
         mainFrame.progressBar.isIndeterminate = false
-        mainFrame.contentField.isEditable = !mainFrame.contentField.isEditable
+        mainFrame.contentField.isEditable = true
 
         val conversation = get()
         if (conversation != null) {
+            mainFrame.contentField.text = ""
+
             if (IdUtil.getConversationId().isNotBlank()) {
                 CacheUtil.setMessage(messageId, mainFrame.textArea.text)
 

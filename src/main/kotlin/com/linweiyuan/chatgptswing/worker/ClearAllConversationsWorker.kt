@@ -10,6 +10,7 @@ import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import javax.swing.SwingUtilities
 import javax.swing.SwingWorker
 
 class ClearAllConversationsWorker(
@@ -18,8 +19,6 @@ class ClearAllConversationsWorker(
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
-
         try {
             val response = Jsoup.newSession().useDefault(accessToken)
                 .url(Constant.URL_CLEAR_ALL_CONVERSATIONS)
@@ -39,12 +38,14 @@ class ClearAllConversationsWorker(
     }
 
     override fun done() {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = false
 
         val ok = get()
         if (ok) {
             IdUtil.clearIds()
-            GetConversationListWorker(accessToken, mainFrame).execute()
+            SwingUtilities.invokeLater {
+                GetConversationListWorker(accessToken, mainFrame).execute()
+            }
         }
     }
 

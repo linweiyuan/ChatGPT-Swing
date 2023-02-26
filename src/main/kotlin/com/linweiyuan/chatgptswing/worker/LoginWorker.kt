@@ -15,8 +15,6 @@ import javax.swing.SwingWorker
 class LoginWorker(private val mainFrame: MainFrame) : SwingWorker<Boolean, Void>() {
 
     override fun doInBackground(): Boolean {
-        updateUI()
-
         try {
             val connection = Jsoup.newSession().useDefault()
 
@@ -56,22 +54,18 @@ class LoginWorker(private val mainFrame: MainFrame) : SwingWorker<Boolean, Void>
     }
 
     override fun done() {
-        updateUI()
+        mainFrame.progressBar.isIndeterminate = false
+        mainFrame.usernameField.isEditable = true
+        mainFrame.passwordField.isEditable = true
+        mainFrame.proxyHostField.isEditable = true
+        mainFrame.proxyPortField.isEditable = true
+        mainFrame.loginButton.isEnabled = true
 
         val ok = get()
         if (ok) {
             mainFrame.dispose()
             MainFrame(shouldLogin = false, firstTimeLogin = true)
         }
-    }
-
-    private fun updateUI() {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
-        mainFrame.usernameField.isEditable = !mainFrame.usernameField.isEditable
-        mainFrame.passwordField.isEditable = !mainFrame.passwordField.isEditable
-        mainFrame.proxyHostField.isEditable = !mainFrame.proxyHostField.isEditable
-        mainFrame.proxyPortField.isEditable = !mainFrame.proxyPortField.isEditable
-        mainFrame.loginButton.isEnabled = !mainFrame.loginButton.isEnabled
     }
 
 }

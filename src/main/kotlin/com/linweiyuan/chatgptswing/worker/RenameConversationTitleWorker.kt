@@ -9,6 +9,7 @@ import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import javax.swing.SwingUtilities
 import javax.swing.SwingWorker
 
 class RenameConversationTitleWorker(
@@ -19,8 +20,6 @@ class RenameConversationTitleWorker(
 ) : SwingWorker<Boolean, Message>() {
 
     override fun doInBackground(): Boolean {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
-
         try {
             val response = Jsoup.newSession().useDefault(accessToken)
                 .url(String.format(Constant.URL_RENAME_CONVERSATION, conversationId))
@@ -40,9 +39,11 @@ class RenameConversationTitleWorker(
     }
 
     override fun done() {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = false
 
-        GetConversationListWorker(accessToken, mainFrame).execute()
+        SwingUtilities.invokeLater {
+            GetConversationListWorker(accessToken, mainFrame).execute()
+        }
     }
 
 }

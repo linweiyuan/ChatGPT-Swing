@@ -1,24 +1,20 @@
 package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
+import com.linweiyuan.chatgptswing.MainFrame
 import com.linweiyuan.chatgptswing.dataclass.TTSResponse
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import javazoom.jl.player.Player
 import org.jsoup.Jsoup
-import javax.swing.JButton
-import javax.swing.JProgressBar
 import javax.swing.SwingWorker
 
 class TTSWorker(
-    private val progressBar: JProgressBar,
     private val text: String,
-    private val ttsButton: JButton,
+    private val mainFrame: MainFrame,
 ) : SwingWorker<TTSResponse, String>() {
 
     override fun doInBackground(): TTSResponse? {
-        updateUI()
-
         try {
             val json = Jsoup.connect("https://freetts.com/Home/PlayAudio")
                 .ignoreContentType(true)
@@ -51,17 +47,13 @@ class TTSWorker(
     }
 
     override fun done() {
-        updateUI()
+        mainFrame.progressBar.isIndeterminate = false
+        mainFrame.ttsButton.isEnabled = true
 
         val ttsResponse = get()
         if (ttsResponse != null) {
-            ttsButton.text = "${Constant.TTS} (${ttsResponse.counts})"
+            mainFrame.ttsButton.text = "${Constant.TTS} (${ttsResponse.counts})"
         }
-    }
-
-    private fun updateUI() {
-        progressBar.isIndeterminate = !progressBar.isIndeterminate
-        ttsButton.isEnabled = !ttsButton.isEnabled
     }
 
 }

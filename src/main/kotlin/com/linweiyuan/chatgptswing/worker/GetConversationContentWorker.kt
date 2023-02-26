@@ -30,9 +30,6 @@ class GetConversationContentWorker(
     private val currentTreeNode = conversationTreeRoot.getCurrentNode(conversationId)
 
     override fun doInBackground(): Boolean {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
-        mainFrame.textArea.border = null
-
         try {
             val response = Jsoup.newSession().useDefault(accessToken).newRequest()
                 .url(String.format(Constant.URL_GET_CONVERSATION_CONTENT, conversationId))
@@ -85,7 +82,7 @@ class GetConversationContentWorker(
     }
 
     override fun done() {
-        mainFrame.progressBar.isIndeterminate = !mainFrame.progressBar.isIndeterminate
+        mainFrame.progressBar.isIndeterminate = false
 
         val ok = get()
         if (ok) {
