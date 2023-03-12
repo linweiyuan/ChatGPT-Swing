@@ -70,17 +70,9 @@ class ChatWorker(
                     if (line == "") {
                         line = it.readLine()
                         continue
-                    } else if (line == "event: ping") {
-                        it.readLine() // time
-                        it.readLine() // \n
-                        line = it.readLine()
-                        continue
-                    } else if (line == "data: [DONE]") {
-                        break
                     }
 
-                    // remove "data: ", length is 6
-                    val chatResponse = JSON.parseObject(line.substring(6), ChatResponse::class.java)
+                    val chatResponse = JSON.parseObject(line.substring(5), ChatResponse::class.java)
                     if (conversationId.isBlank()) {
                         conversationId = chatResponse.conversationId
                     }
@@ -98,7 +90,7 @@ class ChatWorker(
 
             if (IdUtil.getConversationId().isBlank()) {
                 SwingUtilities.invokeLater {
-                    GenTitleWorker(accessToken, conversationId, messageId, mainFrame).execute()
+                    GenTitleWorker(accessToken, conversationId, IdUtil.getParentMessageId(), mainFrame).execute()
                 }
             }
 

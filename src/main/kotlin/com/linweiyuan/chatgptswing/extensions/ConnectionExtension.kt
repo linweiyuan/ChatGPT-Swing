@@ -11,7 +11,7 @@ fun Connection.useDefault(accessToken: String = ""): Connection {
     if (accessToken.isNotBlank()) {
         connection = connection.headers(
             mapOf(
-                Constant.AUTHORIZATION to accessToken,
+                Constant.AUTHORIZATION to "Bearer $accessToken",
             )
         )
     }
