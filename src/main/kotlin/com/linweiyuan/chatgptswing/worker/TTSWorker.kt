@@ -13,7 +13,6 @@ class TTSWorker(
     private val text: String,
     private val mainFrame: MainFrame,
 ) : SwingWorker<TTSResponse, String>() {
-
     override fun doInBackground(): TTSResponse? {
         try {
             val json = Jsoup.connect("https://freetts.com/Home/PlayAudio")
@@ -55,5 +54,4 @@ class TTSWorker(
             mainFrame.ttsButton.text = "${Constant.TTS} (${ttsResponse.counts})"
         }
     }
-
 }

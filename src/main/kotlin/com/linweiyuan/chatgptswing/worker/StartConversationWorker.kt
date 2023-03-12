@@ -2,13 +2,17 @@ package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.*
+import com.linweiyuan.chatgptswing.dataclass.Author
+import com.linweiyuan.chatgptswing.dataclass.Content
+import com.linweiyuan.chatgptswing.dataclass.ConversationSSE
+import com.linweiyuan.chatgptswing.dataclass.Message
 import com.linweiyuan.chatgptswing.extensions.getCurrentNode
+import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
-import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
+import com.linweiyuan.chatgptswing.util.ConfigUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
@@ -19,12 +23,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-class ChatWorker(
-    private val accessToken: String,
-    private val content: String,
+class StartConversationWorker(
     private val mainFrame: MainFrame,
-) : SwingWorker<Conversation, String>() {
-
+    private val content: String,
+) : SwingWorker<Boolean, String>() {
     private var conversationId = IdUtil.getConversationId()
 
     private val conversationTreeModel = mainFrame.conversationTree.model as DefaultTreeModel
@@ -34,31 +36,48 @@ class ChatWorker(
     private lateinit var newMessageNode: DefaultMutableTreeNode
     private val messageId = UUID.randomUUID().toString()
 
-    override fun doInBackground(): Conversation? {
+    override fun doInBackground(): Boolean {
         try {
-            val requestMap = mapOf(
-                "message_id" to messageId,
+            val startConversationRequest = mapOf(
+                "action" to "next",
+                "messages" to listOf(
+                    mapOf(
+                        "author" to mapOf(
+                            "role" to "user"
+                        ),
+                        "content" to mapOf(
+                            "content_type" to "text",
+                            "parts" to listOf(content),
+                        ),
+                        "id" to UUID.randomUUID().toString(),
+                        "role" to "user",
+                    )
+                ),
+                "model" to Constant.MODEL,
                 "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
-                "conversation_id" to conversationId.ifBlank { null },
-                "content" to content,
+                "conversation_id" to conversationId.ifBlank { null }
             )
+
             IdUtil.setParentMessageId("")
-            val response = Jsoup.newSession().useDefault(accessToken).newRequest()
-                .url(Constant.URL_MAKE_CONVERSATION)
+
+            val url = "${ConfigUtil.getServerUrl()}${Constant.URL_START_CONVERSATION}"
+            val requestBody = JSON.toJSONString(startConversationRequest)
+            val response = Jsoup.connect(url)
                 .method(Connection.Method.POST)
-                .requestBody(JSON.toJSONString(requestMap))
+                .requestBody(requestBody)
+                .preset()
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
-                return null
+                return false
             }
 
             currentTreeNode?.let {
                 newMessageNode = DefaultMutableTreeNode(
                     Message(
-                        messageId,
-                        Author(Constant.ROLE_USER),
-                        Content(Constant.MESSAGE_CONTENT_TYPE_TEXT, mutableListOf(content))
+                        id = messageId,
+                        author = Author(Constant.ROLE_USER),
+                        content = Content(Constant.MESSAGE_CONTENT_TYPE_TEXT, mutableListOf(content)),
                     )
                 )
                 it.add(newMessageNode)
@@ -70,18 +89,20 @@ class ChatWorker(
                     if (line == "") {
                         line = it.readLine()
                         continue
+                    } else if (line.trim().endsWith("[DONE]")) {
+                        break
                     }
 
-                    val chatResponse = JSON.parseObject(line.substring(5), ChatResponse::class.java)
+                    val conversationSSE = JSON.parseObject(line.substring(5), ConversationSSE::class.java)
                     if (conversationId.isBlank()) {
-                        conversationId = chatResponse.conversationId
+                        conversationId = conversationSSE.conversationId
                     }
                     if (IdUtil.getParentMessageId().isBlank()) {
-                        IdUtil.setParentMessageId(chatResponse.message.id)
+                        IdUtil.setParentMessageId(conversationSSE.message.id)
                     }
-                    val part = chatResponse.message.content.parts[0]
+                    val part = conversationSSE.message.content.parts[0]
                     if (part.isNotBlank()) {
-                        publish(chatResponse.message.content.parts[0])
+                        publish(conversationSSE.message.content.parts[0])
                     }
 
                     line = it.readLine()
@@ -90,14 +111,14 @@ class ChatWorker(
 
             if (IdUtil.getConversationId().isBlank()) {
                 SwingUtilities.invokeLater {
-                    GenTitleWorker(accessToken, conversationId, IdUtil.getParentMessageId(), mainFrame).execute()
+                    GenerateTitleWorker(mainFrame, conversationId, IdUtil.getParentMessageId()).execute()
                 }
             }
 
-            return Conversation(conversationId, "")
+            return true
         } catch (e: Exception) {
             e.toString().warn()
-            return null
+            return false
         }
     }
 
@@ -124,5 +145,4 @@ class ChatWorker(
             }
         }
     }
-
 }

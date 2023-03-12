@@ -2,29 +2,30 @@ package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
-import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.ConfigUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import javax.swing.SwingUtilities
 import javax.swing.SwingWorker
 
 class RenameConversationTitleWorker(
-    private val accessToken: String,
+    private val mainFrame: MainFrame,
     private val conversationId: String,
     private val title: String,
-    private val mainFrame: MainFrame,
-) : SwingWorker<Boolean, Message>() {
-
+) : SwingWorker<Boolean, Void>() {
     override fun doInBackground(): Boolean {
         try {
-            val response = Jsoup.newSession().useDefault(accessToken)
-                .url(String.format(Constant.URL_RENAME_CONVERSATION, conversationId))
+            val url = "${ConfigUtil.getServerUrl()}${String.format(Constant.URL_RENAME_TITLE, conversationId)}"
+            val requestBody = JSON.toJSONString(mapOf("title" to title))
+            val response = Jsoup
+                .connect(url)
                 .method(Connection.Method.POST)
-                .requestBody(JSON.toJSONString(mapOf("title" to title)))
+                .requestBody(requestBody)
+                .preset()
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
@@ -42,8 +43,7 @@ class RenameConversationTitleWorker(
         mainFrame.progressBar.isIndeterminate = false
 
         SwingUtilities.invokeLater {
-            GetConversationListWorker(accessToken, mainFrame).execute()
+            GetConversationListWorker(mainFrame).execute()
         }
     }
-
 }

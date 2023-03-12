@@ -1,13 +1,12 @@
 package com.linweiyuan.chatgptswing
 
-import com.alibaba.fastjson2.JSON
-import com.linweiyuan.chatgptswing.dataclass.AuthSession
 import com.linweiyuan.chatgptswing.dataclass.Conversation
 import com.linweiyuan.chatgptswing.dataclass.Message
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
+import com.linweiyuan.chatgptswing.util.ConfigUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import com.linweiyuan.chatgptswing.worker.*
 import org.fife.ui.rsyntaxtextarea.FileTypeUtil
@@ -17,147 +16,53 @@ import org.fife.ui.rtextarea.RTextScrollPane
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.io.File
 import java.net.URI
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.util.*
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(Constant.TITLE) {
-
+class MainFrame : JFrame(Constant.TITLE) {
     val progressBar: JProgressBar = JProgressBar()
-
-    lateinit var usernameField: JTextField
-    lateinit var passwordField: JPasswordField
-    lateinit var proxyHostField: JTextField
-    lateinit var proxyPortField: JTextField
-    lateinit var buttonGroup: ButtonGroup
-    lateinit var loginButton: JButton
-
     lateinit var conversationTree: JTree
-
     lateinit var contentField: JTextField
     lateinit var textArea: RSyntaxTextArea
-
     lateinit var ttsButton: JButton
 
     init {
-        if (shouldLogin) {
-            initLoginFrame()
-        } else {
-            initMainFrame(firstTimeLogin)
-        }
-
+        initMainFrame()
         setLocationRelativeTo(null)
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
         isVisible = true
     }
 
-    private fun initLoginFrame() {
-        layout = GridBagLayout()
-
-        val gridBagConstraints = GridBagConstraints().apply {
-            fill = GridBagConstraints.HORIZONTAL
-        }
-
-        usernameField = JTextField(Constant.LOGIN_FIELD_WIDTH)
-        add(usernameField.wrapped(Constant.USERNAME), gridBagConstraints.apply {
-            gridx = 0
-            gridy = 0
-            gridwidth = 1
-            weightx = 1.0
-        })
-
-        passwordField = JPasswordField(Constant.LOGIN_FIELD_WIDTH)
-        add(passwordField.wrapped(Constant.PASSWORD), gridBagConstraints.apply {
-            gridx = 1
-            gridy = 0
-            gridwidth = 1
-        })
-
-        proxyHostField = JTextField(Constant.LOGIN_FIELD_WIDTH)
-        add(proxyHostField.wrapped(Constant.PROXY_HOST), gridBagConstraints.apply {
-            gridx = 0
-            gridy = 1
-            gridwidth = 1
-        })
-
-        proxyPortField = JTextField(Constant.LOGIN_FIELD_WIDTH)
-        add(proxyPortField.wrapped(Constant.PROXY_PORT), gridBagConstraints.apply {
-            gridx = 1
-            gridy = 1
-            gridwidth = 1
-        })
-
-        buttonGroup = ButtonGroup()
-        val proxyButtonPanel = JPanel().apply {
-            val noneProxyButton = JRadioButton(Constant.PROXY_TYPE_NONE).apply {
-                isSelected = true
-                actionCommand = Constant.PROXY_TYPE_NONE
-            }
-            val httpProxyButton = JRadioButton(Constant.PROXY_TYPE_HTTP).apply {
-                actionCommand = Constant.PROXY_TYPE_HTTP
-            }
-            val socks5ProxyButton = JRadioButton(Constant.PROXY_TYPE_SOCKS5).apply {
-                actionCommand = Constant.PROXY_TYPE_SOCKS5
-            }
-
-            buttonGroup.add(noneProxyButton)
-            buttonGroup.add(httpProxyButton)
-            buttonGroup.add(socks5ProxyButton)
-
-            add(noneProxyButton)
-            add(httpProxyButton)
-            add(socks5ProxyButton)
-        }
-        add(proxyButtonPanel, gridBagConstraints.apply {
-            gridx = 0
-            gridy = 2
-            gridwidth = 2
-        })
-
-        add(progressBar, gridBagConstraints.apply {
-            gridx = 0
-            gridy = 4
-            gridwidth = 2
-        })
-
-        loginButton = JButton(Constant.LOGIN).apply {
-            addActionListener {
-                if (usernameField.text.isBlank() || String(passwordField.password).isBlank()) {
-                    "Please input email and password first.".warn()
-                    return@addActionListener
-                }
-
-                progressBar.isIndeterminate = true
-                usernameField.isEditable = false
-                passwordField.isEditable = false
-                proxyHostField.isEditable = false
-                proxyPortField.isEditable = false
-                loginButton.isEnabled = false
-                SwingUtilities.invokeLater {
-                    LoginWorker(this@MainFrame).execute()
-                }
-            }
-        }
-        add(loginButton, gridBagConstraints.apply {
-            gridx = 0
-            gridy = 3
-            gridwidth = 2
-        })
-
-        pack()
-    }
-
-    private fun initMainFrame(firstTimeLogin: Boolean) {
+    private fun initMainFrame() {
         layout = BorderLayout()
 
-        val json = File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME).readText()
-        val authSession = JSON.parseObject(json, AuthSession::class.java)
+        initConversationTree()
+        val leftPanel = initLeftPanel()
 
+        contentField = initContentField()
+        textArea = initTextArea()
+        val rightPanel = initRightPanel()
+
+        jMenuBar = initMenuBar()
+
+        add(progressBar, BorderLayout.NORTH)
+        add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel).apply {
+            dividerLocation = Constant.SPLIT_PANE_DIVIDER_LOCATION
+        })
+        size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
+
+        if (ConfigUtil.getServerUrl().isNotBlank() && ConfigUtil.getAccessToken().isNotBlank()) {
+            progressBar.isIndeterminate = true
+            SwingUtilities.invokeLater {
+                GetConversationListWorker(this).execute()
+            }
+        }
+    }
+
+    private fun initConversationTree() {
         val conversationTreeModel = DefaultTreeModel(DefaultMutableTreeNode("ROOT"))
         conversationTree = JTree(conversationTreeModel).apply {
             isRootVisible = false
@@ -188,11 +93,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                         textArea.border = null
 
                         SwingUtilities.invokeLater {
-                            GetConversationContentWorker(
-                                authSession.accessToken,
-                                conversation.id,
-                                this@MainFrame
-                            ).execute()
+                            GetConversationContentWorker(this@MainFrame, conversation.id).execute()
                         }
                     } else {
                         textArea.text = text
@@ -221,11 +122,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                             textArea.border = null
 
                             SwingUtilities.invokeLater {
-                                GetConversationContentWorker(
-                                    authSession.accessToken,
-                                    conversation.id,
-                                    this@MainFrame
-                                ).execute()
+                                GetConversationContentWorker(this@MainFrame, conversation.id).execute()
                             }
                         } else if (SwingUtilities.isRightMouseButton(e)) {
                             showConversationPopupMenu(e, conversation)
@@ -241,11 +138,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                                 textArea.border = null
 
                                 SwingUtilities.invokeLater {
-                                    GetConversationContentWorker(
-                                        authSession.accessToken,
-                                        conversation.id,
-                                        this@MainFrame,
-                                    ).execute()
+                                    GetConversationContentWorker(this@MainFrame, conversation.id).execute()
                                 }
                             }
                         })
@@ -267,10 +160,9 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                                 progressBar.isIndeterminate = true
                                 SwingUtilities.invokeLater {
                                     RenameConversationTitleWorker(
-                                        authSession.accessToken,
+                                        this@MainFrame,
                                         conversationId,
                                         title,
-                                        this@MainFrame,
                                     ).execute()
                                 }
                             }
@@ -286,12 +178,14 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
                                 progressBar.isIndeterminate = true
                                 val conversationId = IdUtil.getConversationId()
+                                val url = "${ConfigUtil.getServerUrl()}${
+                                    String.format(
+                                        Constant.URL_DELETE_CONVERSATION,
+                                        conversationId
+                                    )
+                                }"
                                 SwingUtilities.invokeLater {
-                                    DeleteConversationWorker(
-                                        authSession.accessToken,
-                                        conversationId,
-                                        this@MainFrame,
-                                    ).execute()
+                                    DeleteConversationWorker(this@MainFrame, url).execute()
                                 }
                             }
                         })
@@ -329,12 +223,7 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
 
                                 progressBar.isIndeterminate = true
                                 SwingUtilities.invokeLater {
-                                    FeedbackConversationWorker(
-                                        authSession.accessToken,
-                                        message,
-                                        rating,
-                                        this@MainFrame,
-                                    ).execute()
+                                    FeedbackConversationWorker(this@MainFrame, message, rating).execute()
                                 }
                             }
                         })
@@ -342,195 +231,179 @@ class MainFrame(shouldLogin: Boolean, firstTimeLogin: Boolean = false) : JFrame(
                 }
             })
         }
+    }
 
-        val leftPanel = JPanel().apply {
-            layout = BorderLayout()
+    private fun initLeftPanel() = JPanel().apply {
+        layout = BorderLayout()
 
-            add(JScrollPane(conversationTree).apply {
-                horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-            })
+        add(JScrollPane(conversationTree).apply {
+            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        })
 
-            add(JPanel().apply {
-                layout = GridLayout(3, 1)
+        add(JPanel().apply {
+            layout = GridLayout(3, 1)
 
-                add(JButton(Constant.NEW).apply {
-                    addActionListener {
-                        textArea.border = null
-                        textArea.text = ""
-                        IdUtil.clearIds()
-                        conversationTree.clearSelection()
-                    }
-                })
-
-                add(JButton(Constant.REFRESH).apply {
-                    addActionListener {
-                        progressBar.isIndeterminate = true
-
-
-                        SwingUtilities.invokeLater {
-                            GetConversationListWorker(authSession.accessToken, this@MainFrame).execute()
-                        }
-                    }
-                })
-
-                add(JButton(Constant.CLEAR).apply {
-                    addActionListener {
-                        val option = JOptionPane.showConfirmDialog(null, "Do you want to clear all conversions?")
-                        if (option != JOptionPane.OK_OPTION) {
-                            return@addActionListener
-                        }
-
-                        progressBar.isIndeterminate = true
-                        SwingUtilities.invokeLater {
-                            ClearAllConversationsWorker(authSession.accessToken, this@MainFrame).execute()
-                        }
-                    }
-                })
-            }, BorderLayout.SOUTH)
-        }
-
-        contentField = JTextField().apply {
-            addActionListener {
-                val content = contentField.text.trim()
-                if (content.isBlank()) {
-                    "Please input something.".warn()
-                    return@addActionListener
-                }
-
-                progressBar.isIndeterminate = true
-                contentField.isEditable = false
-                textArea.border = BorderFactory.createTitledBorder(content)
-                textArea.text = ""
-
-                SwingUtilities.invokeLater {
-                    ChatWorker(authSession.accessToken, content, this@MainFrame).execute()
-                }
-            }
-        }
-
-        textArea = RSyntaxTextArea().apply {
-            isCodeFoldingEnabled = true
-            highlightCurrentLine = false
-            paintTabLines = true
-            lineWrap = true
-            antiAliasingEnabled = true
-            isEditable = false
-        }
-
-        val rightPanel = JPanel().apply {
-            layout = GridBagLayout()
-
-            val gridBagConstraints = GridBagConstraints().apply {
-                fill = GridBagConstraints.BOTH
-            }
-
-            add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
-                gridx = 0
-                gridy = 0
-                weightx = 1.0
-                weighty = -1.0
-            })
-
-            val languages = FileTypeUtil.get().defaultContentTypeToFilterMap.keys.sorted().toTypedArray()
-            val languageComboBox = JComboBox(languages).apply {
-                addItemListener {
-                    val selected = it.item as String
-                    textArea.syntaxEditingStyle = selected
-                }
-                selectedItem = SyntaxConstants.SYNTAX_STYLE_JAVA
-            }
-
-            add(languageComboBox, gridBagConstraints.apply {
-                gridx = 0
-                gridy = 1
-                weighty = -1.0
-            })
-
-            add(RTextScrollPane(textArea).apply {
-                horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-            }, gridBagConstraints.apply {
-                gridx = 0
-                gridy = 2
-                weighty = 1.0
-            })
-
-            ttsButton = JButton(Constant.TTS).apply {
+            add(JButton(Constant.NEW).apply {
                 addActionListener {
-                    val text = textArea.selectedText
-                    if (text == null) {
-                        "Please select some texts first.".warn()
+                    textArea.border = null
+                    textArea.text = ""
+                    IdUtil.clearIds()
+                    conversationTree.clearSelection()
+                }
+            })
+
+            add(JButton(Constant.REFRESH).apply {
+                addActionListener {
+                    progressBar.isIndeterminate = true
+
+
+                    SwingUtilities.invokeLater {
+                        GetConversationListWorker(this@MainFrame).execute()
+                    }
+                }
+            })
+
+            add(JButton(Constant.CLEAR).apply {
+                addActionListener {
+                    val option = JOptionPane.showConfirmDialog(null, "Do you want to clear all conversions?")
+                    if (option != JOptionPane.OK_OPTION) {
                         return@addActionListener
                     }
 
                     progressBar.isIndeterminate = true
-                    ttsButton.isEnabled = false
                     SwingUtilities.invokeLater {
-                        TTSWorker(text, this@MainFrame).execute()
+                        val url = "${ConfigUtil.getServerUrl()}${Constant.URL_CLEAR_ALL_CONVERSATIONS}"
+                        DeleteConversationWorker(this@MainFrame, url).execute()
                     }
                 }
+            })
+        }, BorderLayout.SOUTH)
+    }
+
+    private fun initContentField() = JTextField().apply {
+        addActionListener {
+            val content = contentField.text.trim()
+            if (content.isBlank()) {
+                "Please input something.".warn()
+                return@addActionListener
             }
 
-            add(ttsButton, gridBagConstraints.apply {
-                gridx = 0
-                gridy = 3
-                weighty = -1.0
-            })
+            progressBar.isIndeterminate = true
+            contentField.isEditable = false
+            textArea.border = BorderFactory.createTitledBorder(content)
+            textArea.text = ""
+
+            SwingUtilities.invokeLater {
+                StartConversationWorker(this@MainFrame, content).execute()
+            }
+        }
+    }
+
+    private fun initTextArea() = RSyntaxTextArea().apply {
+        isCodeFoldingEnabled = true
+        highlightCurrentLine = false
+        paintTabLines = true
+        lineWrap = true
+        antiAliasingEnabled = true
+        isEditable = false
+    }
+
+    private fun initRightPanel() = JPanel().apply {
+        layout = GridBagLayout()
+
+        val gridBagConstraints = GridBagConstraints().apply {
+            fill = GridBagConstraints.BOTH
         }
 
-        add(progressBar, BorderLayout.NORTH)
-        add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel).apply {
-            dividerLocation = Constant.SPLIT_PANE_DIVIDER_LOCATION
+        add(contentField.wrapped(Constant.CONTENT), gridBagConstraints.apply {
+            gridx = 0
+            gridy = 0
+            weightx = 1.0
+            weighty = -1.0
         })
 
-        val aboutMenuItem = JMenuItem(Constant.ABOUT).apply {
+        val languages = FileTypeUtil.get().defaultContentTypeToFilterMap.keys.sorted().toTypedArray()
+        val languageComboBox = JComboBox(languages).apply {
+            addItemListener {
+                val selected = it.item as String
+                textArea.syntaxEditingStyle = selected
+            }
+            selectedItem = SyntaxConstants.SYNTAX_STYLE_JAVA
+        }
+
+        add(languageComboBox, gridBagConstraints.apply {
+            gridx = 0
+            gridy = 1
+            weighty = -1.0
+        })
+
+        add(RTextScrollPane(textArea).apply {
+            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        }, gridBagConstraints.apply {
+            gridx = 0
+            gridy = 2
+            weighty = 1.0
+        })
+
+        ttsButton = JButton(Constant.TTS).apply {
             addActionListener {
-                JOptionPane.showMessageDialog(
-                    null,
-                    JLabel(Constant.ABOUT_INTO).apply {
-                        addMouseListener(object : MouseAdapter() {
-                            override fun mouseClicked(e: MouseEvent) {
-                                if (e.button == MouseEvent.BUTTON1) {
-                                    Desktop.getDesktop().browse(URI(Constant.GITHUB_REPO_URL))
-                                }
-                            }
-                        })
-                    })
-            }
-        }
-        val moreMenu = JMenu(Constant.MORE).apply {
-            add(aboutMenuItem)
-        }
-        val menuBar = JMenuBar().apply {
-            add(moreMenu)
-        }
-        jMenuBar = menuBar
+                val text = textArea.selectedText
+                if (text == null) {
+                    "Please select some texts first.".warn()
+                    return@addActionListener
+                }
 
-        size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
-
-        progressBar.isIndeterminate = true
-        SwingUtilities.invokeLater {
-            GetConversationListWorker(authSession.accessToken, this).execute()
-        }
-
-        if (firstTimeLogin) {
-            val username = System.getProperty("user.name")
-            val content = if (Locale.getDefault().language == "zh") {
-                String.format(Constant.GREETING_CHINESE, username)
-            } else {
-                String.format(Constant.GREETING_ENGLITH, username)
-            }
-            SwingUtilities.invokeLater {
-                ChatWorker(authSession.accessToken, content, this).execute()
-            }
-        } else {
-            val expirationDate = ZonedDateTime.parse(authSession.expires)
-            val currentDate = ZonedDateTime.now(expirationDate.zone)
-            if (currentDate.isAfter(expirationDate.minusDays(Constant.TOKEN_RENEW_BEFORE_EXPIRATION_DAYS))) {
+                progressBar.isIndeterminate = true
+                ttsButton.isEnabled = false
                 SwingUtilities.invokeLater {
-                    RenewAccessTokenWorker(authSession).execute()
+                    TTSWorker(text, this@MainFrame).execute()
                 }
             }
         }
+
+        add(ttsButton, gridBagConstraints.apply {
+            gridx = 0
+            gridy = 3
+            weighty = -1.0
+        })
+    }
+
+    private fun initMenuBar() = JMenuBar().apply {
+        add(JMenu(Constant.MORE).apply {
+            add(JMenuItem(Constant.CONFIG).apply {
+                addActionListener {
+                    val serverUrl = JOptionPane.showInputDialog("Server URL", ConfigUtil.getServerUrl())
+                    if (serverUrl == null) {
+                        "Please input server url".warn()
+                        return@addActionListener
+                    }
+
+                    val accessToken = JOptionPane.showInputDialog("Access Token", ConfigUtil.getAccessToken())
+                    if (accessToken == null) {
+                        "Please input access token".warn()
+                        return@addActionListener
+                    }
+
+                    ConfigUtil.saveConfig(serverUrl, accessToken)
+                }
+            })
+
+            add(JMenuItem(Constant.ABOUT).apply {
+                addActionListener {
+                    JOptionPane.showMessageDialog(
+                        null,
+                        JLabel(Constant.ABOUT_INTO).apply {
+                            addMouseListener(object : MouseAdapter() {
+                                override fun mouseClicked(e: MouseEvent) {
+                                    if (e.button == MouseEvent.BUTTON1) {
+                                        Desktop.getDesktop().browse(URI(Constant.GITHUB_REPO_URL))
+                                    }
+                                }
+                            })
+                        })
+                }
+            })
+        })
     }
 }
 
@@ -542,26 +415,7 @@ fun main() {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
     }
 
-    val shouldLogin: Boolean
-
-    val authSessionFile = File(System.getProperty("user.home"), Constant.AUTH_SESSION_FILE_NAME)
-    shouldLogin = if (authSessionFile.exists()) {
-        val authSessionJson = authSessionFile.readText()
-        if (authSessionJson.isBlank()) {
-            true
-        } else {
-            val authSession = JSON.parseObject(authSessionJson, AuthSession::class.java)
-
-            val zoneId = ZoneId.systemDefault()
-            val expireTime = ZonedDateTime.parse(authSession.expires).withZoneSameInstant(zoneId)
-            val currentTime = ZonedDateTime.now(zoneId)
-            authSession.accessToken.isBlank() || expireTime.isBefore(currentTime)
-        }
-    } else {
-        true
-    }
-
     SwingUtilities.invokeLater {
-        MainFrame(shouldLogin)
+        MainFrame()
     }
 }

@@ -2,9 +2,8 @@ package com.linweiyuan.chatgptswing.worker
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
-import com.linweiyuan.chatgptswing.extensions.useDefault
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.IdUtil
@@ -14,17 +13,17 @@ import javax.swing.SwingUtilities
 import javax.swing.SwingWorker
 
 class DeleteConversationWorker(
-    private val accessToken: String,
-    private val conversationId: String,
     private val mainFrame: MainFrame,
-) : SwingWorker<Boolean, Message>() {
+    private val url: String,
+) : SwingWorker<Boolean, Void>() {
 
     override fun doInBackground(): Boolean {
         try {
-            val response = Jsoup.newSession().useDefault(accessToken)
-                .url(String.format(Constant.URL_DELETE_CONVERSATION, conversationId))
+            val requestBody = JSON.toJSONString(mapOf("is_visible" to false))
+            val response = Jsoup.connect(url)
                 .method(Connection.Method.POST)
-                .requestBody(JSON.toJSONString(mapOf("is_visible" to false)))
+                .requestBody(requestBody)
+                .preset()
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
@@ -45,9 +44,8 @@ class DeleteConversationWorker(
         if (ok) {
             IdUtil.clearIds()
             SwingUtilities.invokeLater {
-                GetConversationListWorker(accessToken, mainFrame).execute()
+                GetConversationListWorker(mainFrame).execute()
             }
         }
     }
-
 }
