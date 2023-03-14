@@ -14,9 +14,9 @@ With this program, you can do almost everything that can be done on the web vers
 - give a feedback (thumbsUp or thumbsDown) on response
 - speech-to-text (using Free TTS API for testing with an IP based limitation of 6000 tokens per week)
 
-The API for this application which is developed with Golang and Gin is available
-here: [go-chatgpt-api](https://github.com/linweiyuan/go-chatgpt-api), you can build and deploy your own in supported
-countries.
+The API for this application is available [here](https://github.com/linweiyuan/go-chatgpt-api)
+or [here](https://github.com/linweiyuan/chatgptapi), you can build and deploy your own in supported
+countries, both of them can bypass Cloudflare v2 CAPTCHA in a special way.
 
 **Please note: this is an unofficial application using unofficial APIs, maybe unavailable at any time.**
 
@@ -34,4 +34,4 @@ Screenshots:
 
 Thanks to these libraries.
 
-![](https://linweiyuan.github.io/2023/02/25/ChatGPT-Swing/dependencies.png)
+![](https://linweiyuan.github.io/2023/02/25/ChatGPT-Swing/dependencies-v2.png)
