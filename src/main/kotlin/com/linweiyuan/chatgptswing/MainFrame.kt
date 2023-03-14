@@ -27,7 +27,6 @@ class MainFrame : JFrame(Constant.TITLE) {
     lateinit var conversationTree: JTree
     lateinit var contentField: JTextField
     lateinit var textArea: RSyntaxTextArea
-    lateinit var ttsButton: JButton
 
     init {
         initMainFrame()
@@ -343,28 +342,6 @@ class MainFrame : JFrame(Constant.TITLE) {
             gridx = 0
             gridy = 2
             weighty = 1.0
-        })
-
-        ttsButton = JButton(Constant.TTS).apply {
-            addActionListener {
-                val text = textArea.selectedText
-                if (text == null) {
-                    "Please select some texts first.".warn()
-                    return@addActionListener
-                }
-
-                progressBar.isIndeterminate = true
-                ttsButton.isEnabled = false
-                SwingUtilities.invokeLater {
-                    TTSWorker(text, this@MainFrame).execute()
-                }
-            }
-        }
-
-        add(ttsButton, gridBagConstraints.apply {
-            gridx = 0
-            gridy = 3
-            weighty = -1.0
         })
     }
 
