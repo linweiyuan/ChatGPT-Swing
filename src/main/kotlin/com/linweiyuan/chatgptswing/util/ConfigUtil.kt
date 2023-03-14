@@ -33,6 +33,9 @@ object ConfigUtil {
     fun getAccessToken(): String = accessToken
 
     fun saveConfig(serverUrl: String, accessToken: String) {
+        this.serverUrl = serverUrl
+        this.accessToken = accessToken
+
         File(System.getProperty("user.home"), Constant.CONFIG_FILE_NAME).writeText(
             JSON.toJSONString(Config(serverUrl, accessToken), JSONWriter.Feature.PrettyFormat)
         )
