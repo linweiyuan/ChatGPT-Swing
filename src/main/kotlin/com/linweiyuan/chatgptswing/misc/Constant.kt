@@ -11,7 +11,7 @@ object Constant {
     const val CONFIG_FILE_NAME = ".chatgpt-swing.json"
 
     const val URL_START_CONVERSATION = "/conversation"
-    const val URL_GET_CONVERSATION_LIST = "/conversations"
+    const val URL_GET_CONVERSATION_LIST = "/conversations?offset=%d&limit=%d"
     const val URL_GET_CONVERSATION_CONTENT = "/conversation/%s"
     const val URL_CLEAR_ALL_CONVERSATIONS = "/conversations"
     const val URL_DELETE_CONVERSATION = "/conversation/%s"
@@ -29,7 +29,6 @@ object Constant {
     const val FEEDBACK_DISLIKE = "Dislike"
     const val FEEDBACK_THUMBS_UP = "thumbsUp"
     const val FEEDBACK_THUMBS_DOWN = "thumbsDown"
-    const val TTS = "TTS"
     const val CONFIG = "Config"
     const val ABOUT = "About"
     const val GITHUB_REPO_URL = "https://github.com/linweiyuan/ChatGPT-Swing"

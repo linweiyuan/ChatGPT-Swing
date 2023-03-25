@@ -26,7 +26,7 @@ class GetConversationListWorker(
 
     override fun doInBackground(): Boolean {
         try {
-            val url = "${ConfigUtil.getServerUrl()}${Constant.URL_GET_CONVERSATION_LIST}"
+            val url = "${ConfigUtil.getServerUrl()}${String.format(Constant.URL_GET_CONVERSATION_LIST, 0, 100)}"
             val response = Jsoup.connect(url).preset().execute()
             if (response.statusCode() != Constant.HTTP_OK) {
                 response.showErrorMessage()
