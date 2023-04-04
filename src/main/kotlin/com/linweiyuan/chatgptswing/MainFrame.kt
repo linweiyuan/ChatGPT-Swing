@@ -1,14 +1,15 @@
 package com.linweiyuan.chatgptswing
 
-import com.linweiyuan.chatgptswing.dataclass.Conversation
-import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Conversation
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Message
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.extensions.wrapped
 import com.linweiyuan.chatgptswing.misc.Constant
 import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.ConfigUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
-import com.linweiyuan.chatgptswing.worker.*
+import com.linweiyuan.chatgptswing.worker.api.ChatCompletionsWorker
+import com.linweiyuan.chatgptswing.worker.chatgpt.*
 import org.fife.ui.rsyntaxtextarea.FileTypeUtil
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants
@@ -17,7 +18,6 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.net.URI
-import java.util.*
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -28,14 +28,38 @@ class MainFrame : JFrame(Constant.TITLE) {
     lateinit var contentField: JTextField
     lateinit var textArea: RSyntaxTextArea
 
+    private val isChatGPT: Boolean
+
     init {
-        initMainFrame()
+        val option = JOptionPane.showOptionDialog(
+            null,
+            Constant.CHOOSE_MODE_MESSAGE,
+            Constant.CHOOSE_MODE_TITLE,
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.INFORMATION_MESSAGE,
+            null,
+            arrayOf(
+                Constant.MODE_CHATGPT,
+                Constant.MODE_API,
+            ),
+            null,
+        )
+        isChatGPT = if (option == JOptionPane.YES_OPTION) {
+            initChatGPTFrame()
+            true
+        } else {
+            initApiFrame()
+            false
+        }
+
+        jMenuBar = initMenuBar()
+        size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
         setLocationRelativeTo(null)
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
         isVisible = true
     }
 
-    private fun initMainFrame() {
+    private fun initChatGPTFrame() {
         layout = BorderLayout()
 
         initConversationTree()
@@ -45,13 +69,10 @@ class MainFrame : JFrame(Constant.TITLE) {
         textArea = initTextArea()
         val rightPanel = initRightPanel()
 
-        jMenuBar = initMenuBar()
-
         add(progressBar, BorderLayout.NORTH)
         add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel).apply {
             dividerLocation = Constant.SPLIT_PANE_DIVIDER_LOCATION
         })
-        size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
 
         if (ConfigUtil.getServerUrl().isNotBlank() && ConfigUtil.getAccessToken().isNotBlank()) {
             progressBar.isIndeterminate = true
@@ -59,6 +80,14 @@ class MainFrame : JFrame(Constant.TITLE) {
                 GetConversationListWorker(this).execute()
             }
         }
+    }
+
+    private fun initApiFrame() {
+        layout = BorderLayout()
+
+        contentField = initContentField()
+        textArea = initTextArea()
+        add(initRightPanel())
     }
 
     private fun initConversationTree() {
@@ -293,7 +322,11 @@ class MainFrame : JFrame(Constant.TITLE) {
             textArea.text = ""
 
             SwingUtilities.invokeLater {
-                StartConversationWorker(this@MainFrame, content).execute()
+                if (isChatGPT) {
+                    StartConversationWorker(this@MainFrame, content).execute()
+                } else {
+                    ChatCompletionsWorker(this@MainFrame, content).execute()
+                }
             }
         }
     }
@@ -361,7 +394,13 @@ class MainFrame : JFrame(Constant.TITLE) {
                         return@addActionListener
                     }
 
-                    ConfigUtil.saveConfig(serverUrl, accessToken)
+                    val apiKey = JOptionPane.showInputDialog("API Key", ConfigUtil.getAccessToken())
+                    if (apiKey == null) {
+                        "Please input api key".warn()
+                        return@addActionListener
+                    }
+
+                    ConfigUtil.saveConfig(serverUrl, accessToken, apiKey)
                 }
             })
 

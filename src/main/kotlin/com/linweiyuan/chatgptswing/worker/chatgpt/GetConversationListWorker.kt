@@ -1,8 +1,8 @@
-package com.linweiyuan.chatgptswing.worker
+package com.linweiyuan.chatgptswing.worker.chatgpt
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.ConversationList
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.ConversationList
 import com.linweiyuan.chatgptswing.extensions.getCurrentNode
 import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage

@@ -1,8 +1,8 @@
-package com.linweiyuan.chatgptswing.worker
+package com.linweiyuan.chatgptswing.worker.chatgpt
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.Conversation
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Conversation
 import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.warn
@@ -31,7 +31,7 @@ class GenerateTitleWorker(
             val requestBody = JSON.toJSONString(
                 mapOf(
                     "message_id" to parentMessageId,
-                    "model" to Constant.MODEL,
+                    "model" to Constant.MODEL_CHATGPT,
                 )
             )
             val response = Jsoup

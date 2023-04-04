@@ -10,6 +10,7 @@ import java.io.File
 object ConfigUtil {
     private var serverUrl = ""
     private var accessToken = ""
+    private var apiKey = ""
 
     private val configFile = File(System.getProperty("user.home"), Constant.CONFIG_FILE_NAME)
 
@@ -24,6 +25,7 @@ object ConfigUtil {
                 val config = JSON.parseObject(configJson, Config::class.java)
                 serverUrl = config.serverUrl
                 accessToken = config.accessToken
+                apiKey = config.apiKey
             }
         }
     }
@@ -32,12 +34,15 @@ object ConfigUtil {
 
     fun getAccessToken(): String = accessToken
 
-    fun saveConfig(serverUrl: String, accessToken: String) {
+    fun getApiKey(): String = apiKey
+
+    fun saveConfig(serverUrl: String, accessToken: String, apiKey: String) {
         this.serverUrl = serverUrl
         this.accessToken = accessToken
+        this.apiKey = apiKey
 
         File(System.getProperty("user.home"), Constant.CONFIG_FILE_NAME).writeText(
-            JSON.toJSONString(Config(serverUrl, accessToken), JSONWriter.Feature.PrettyFormat)
+            JSON.toJSONString(Config(serverUrl, accessToken, apiKey), JSONWriter.Feature.PrettyFormat)
         )
     }
 }

@@ -19,7 +19,7 @@ object Constant {
     const val URL_GENERATE_TITLE = "/conversation/gen_title/%s"
     const val URL_ADD_MESSAGE_FEEDBACK = "/conversation/message_feedback"
 
-    const val MODEL = "text-davinci-002-render-sha"
+    const val MODEL_CHATGPT = "text-davinci-002-render-sha"
 
     const val CONTENT = "Content"
     const val REFRESH = "Refresh"
@@ -53,4 +53,11 @@ object Constant {
 
     const val MESSAGE_CONTENT_TYPE_TEXT = "text"
     const val ROLE_USER = "user"
+
+    const val CHOOSE_MODE_TITLE = "Mode"
+    const val CHOOSE_MODE_MESSAGE = "Choose a mode."
+    const val MODE_CHATGPT = "ChatGPT"
+    const val MODE_API = "API"
+    const val URL_API_CHAT_COMPLETIONS = "/chat/completions"
+    const val MODEL_API = "gpt-3.5-turbo"
 }

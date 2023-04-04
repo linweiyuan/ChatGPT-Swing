@@ -1,4 +1,4 @@
-package com.linweiyuan.chatgptswing.dataclass
+package com.linweiyuan.chatgptswing.dataclass.chatgpt
 
 import com.alibaba.fastjson2.annotation.JSONField
 

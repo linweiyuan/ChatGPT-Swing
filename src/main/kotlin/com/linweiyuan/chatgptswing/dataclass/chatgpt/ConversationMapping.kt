@@ -1,4 +1,4 @@
-package com.linweiyuan.chatgptswing.dataclass
+package com.linweiyuan.chatgptswing.dataclass.chatgpt
 
 data class ConversationMapping(
     val id: String,

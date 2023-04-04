@@ -1,11 +1,11 @@
-package com.linweiyuan.chatgptswing.worker
+package com.linweiyuan.chatgptswing.worker.chatgpt
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
-import com.linweiyuan.chatgptswing.dataclass.Author
-import com.linweiyuan.chatgptswing.dataclass.Content
-import com.linweiyuan.chatgptswing.dataclass.ConversationSSE
-import com.linweiyuan.chatgptswing.dataclass.Message
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Author
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Content
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.ConversationSSE
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Message
 import com.linweiyuan.chatgptswing.extensions.getCurrentNode
 import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
@@ -53,7 +53,7 @@ class StartConversationWorker(
                         "role" to "user",
                     )
                 ),
-                "model" to Constant.MODEL,
+                "model" to Constant.MODEL_CHATGPT,
                 "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
                 "conversation_id" to conversationId.ifBlank { null }
             )
@@ -86,7 +86,7 @@ class StartConversationWorker(
             response.bodyStream().bufferedReader().use {
                 var line = it.readLine()
                 while (line != null) {
-                    if (line == "") {
+                    if (line == "" || line.startsWith("event")) {
                         line = it.readLine()
                         continue
                     } else if (line.trim().endsWith("[DONE]")) {

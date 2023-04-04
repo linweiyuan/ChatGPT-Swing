@@ -1,6 +1,6 @@
 package com.linweiyuan.chatgptswing.extensions
 
-import com.linweiyuan.chatgptswing.dataclass.Conversation
+import com.linweiyuan.chatgptswing.dataclass.chatgpt.Conversation
 import javax.swing.tree.DefaultMutableTreeNode
 
 fun DefaultMutableTreeNode.getCurrentNode(conversationId: String) = children().toList().find {
