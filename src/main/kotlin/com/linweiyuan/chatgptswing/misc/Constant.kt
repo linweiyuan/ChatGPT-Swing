@@ -31,6 +31,7 @@ object Constant {
     const val FEEDBACK_THUMBS_DOWN = "thumbsDown"
     const val CONFIG = "Config"
     const val ABOUT = "About"
+    const val CHECK_USAGE = "Check Usage"
     const val GITHUB_REPO_URL = "https://github.com/linweiyuan/ChatGPT-Swing"
     const val ABOUT_INTO = "GitHub: $GITHUB_REPO_URL (click to open)"
     const val MORE = "More"
@@ -60,4 +61,5 @@ object Constant {
     const val MODE_API = "API"
     const val URL_API_CHAT_COMPLETIONS = "/chat/completions"
     const val MODEL_API = "gpt-3.5-turbo"
+    const val URL_API_CHECK_USAGE = "/dashboard/billing/credit_grants"
 }

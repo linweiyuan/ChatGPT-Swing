@@ -9,6 +9,7 @@ import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.ConfigUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import com.linweiyuan.chatgptswing.worker.api.ChatCompletionsWorker
+import com.linweiyuan.chatgptswing.worker.api.CheckUsageWorker
 import com.linweiyuan.chatgptswing.worker.chatgpt.*
 import org.fife.ui.rsyntaxtextarea.FileTypeUtil
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
@@ -31,6 +32,10 @@ class MainFrame : JFrame(Constant.TITLE) {
     private val isChatGPT: Boolean
 
     init {
+        jMenuBar = initMenuBar()
+
+        add(progressBar, BorderLayout.NORTH)
+
         val option = JOptionPane.showOptionDialog(
             null,
             Constant.CHOOSE_MODE_MESSAGE,
@@ -52,7 +57,6 @@ class MainFrame : JFrame(Constant.TITLE) {
             false
         }
 
-        jMenuBar = initMenuBar()
         size = Dimension(Constant.DEFAULT_WIDTH, Constant.DEFAULT_HEIGHT)
         setLocationRelativeTo(null)
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
@@ -69,7 +73,6 @@ class MainFrame : JFrame(Constant.TITLE) {
         textArea = initTextArea()
         val rightPanel = initRightPanel()
 
-        add(progressBar, BorderLayout.NORTH)
         add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel).apply {
             dividerLocation = Constant.SPLIT_PANE_DIVIDER_LOCATION
         })
@@ -88,6 +91,16 @@ class MainFrame : JFrame(Constant.TITLE) {
         contentField = initContentField()
         textArea = initTextArea()
         add(initRightPanel())
+
+        jMenuBar.add(JMenuItem(Constant.CHECK_USAGE).apply {
+            addActionListener {
+                progressBar.isIndeterminate = true
+
+                SwingUtilities.invokeLater {
+                    CheckUsageWorker(this@MainFrame).execute()
+                }
+            }
+        })
     }
 
     private fun initConversationTree() {
