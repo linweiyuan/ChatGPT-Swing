@@ -2,11 +2,14 @@ package com.linweiyuan.chatgptswing.worker.api
 
 import com.alibaba.fastjson2.JSON
 import com.linweiyuan.chatgptswing.MainFrame
+import com.linweiyuan.chatgptswing.dataclass.api.ChatCompletionsRequest
 import com.linweiyuan.chatgptswing.dataclass.api.ChatCompletionsSSE
+import com.linweiyuan.chatgptswing.dataclass.api.Message
 import com.linweiyuan.chatgptswing.extensions.preset
 import com.linweiyuan.chatgptswing.extensions.showErrorMessage
 import com.linweiyuan.chatgptswing.extensions.warn
 import com.linweiyuan.chatgptswing.misc.Constant
+import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.ConfigUtil
 import org.jsoup.Connection
 import org.jsoup.Jsoup
@@ -18,17 +21,10 @@ class ChatCompletionsWorker(
 ) : SwingWorker<Boolean, String>() {
     override fun doInBackground(): Boolean {
         try {
-            val chatCompletionsRequest = mapOf(
-                "model" to Constant.MODEL_API,
-                "messages" to listOf(
-                    mapOf(
-                        "role" to Constant.ROLE_USER,
-                        "content" to content
-                    )
-                ),
-                "stream" to true,
-            )
-
+            val chatCompletionsRequest = ChatCompletionsRequest(
+                messages = CacheUtil.getApiMessages().apply {
+                    add(Message(content = content))
+                })
             val url = "${ConfigUtil.getServerUrl()}${Constant.URL_API_CHAT_COMPLETIONS}"
             val requestBody = JSON.toJSONString(chatCompletionsRequest)
             val response = Jsoup.connect(url)
@@ -52,7 +48,6 @@ class ChatCompletionsWorker(
                     }
 
                     val chatCompletionsSSE = JSON.parseObject(line.substring(5), ChatCompletionsSSE::class.java)
-
                     val choice = chatCompletionsSSE.choices[0]
                     choice.finishReason?.let { reason ->
                         if (reason == "stop") {
@@ -85,6 +80,8 @@ class ChatCompletionsWorker(
         val ok = get()
         if (ok != null) {
             mainFrame.contentField.text = ""
+
+            CacheUtil.getApiMessages().add(Message(role = Constant.ROLE_ASSISTANT, content = mainFrame.textArea.text))
         }
     }
 }

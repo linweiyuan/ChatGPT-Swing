@@ -32,6 +32,8 @@ class MainFrame : JFrame(Constant.TITLE) {
     private val isChatGPT: Boolean
 
     init {
+        layout = BorderLayout()
+
         jMenuBar = initMenuBar()
 
         add(progressBar, BorderLayout.NORTH)
@@ -64,8 +66,6 @@ class MainFrame : JFrame(Constant.TITLE) {
     }
 
     private fun initChatGPTFrame() {
-        layout = BorderLayout()
-
         initConversationTree()
         val leftPanel = initLeftPanel()
 
@@ -86,8 +86,6 @@ class MainFrame : JFrame(Constant.TITLE) {
     }
 
     private fun initApiFrame() {
-        layout = BorderLayout()
-
         contentField = initContentField()
         textArea = initTextArea()
         add(initRightPanel())

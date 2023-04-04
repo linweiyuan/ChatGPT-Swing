@@ -54,6 +54,7 @@ object Constant {
 
     const val MESSAGE_CONTENT_TYPE_TEXT = "text"
     const val ROLE_USER = "user"
+    const val ROLE_ASSISTANT = "assistant"
 
     const val CHOOSE_MODE_TITLE = "Mode"
     const val CHOOSE_MODE_MESSAGE = "Choose a mode."
