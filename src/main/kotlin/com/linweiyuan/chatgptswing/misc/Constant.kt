@@ -59,7 +59,8 @@ object Constant {
     const val CHOOSE_MODE_MESSAGE = "Choose a mode."
     const val MODE_CHATGPT = "ChatGPT"
     const val MODE_API = "API"
-    const val URL_API_CHAT_COMPLETIONS = "/chat/completions"
+    private const val API_VERSION = "v1"
+    const val URL_API_CHAT_COMPLETIONS = "/$API_VERSION/chat/completions"
     const val MODEL_API = "gpt-3.5-turbo"
     const val URL_API_CHECK_USAGE = "/dashboard/billing/credit_grants"
 }
