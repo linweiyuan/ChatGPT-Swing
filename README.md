@@ -18,9 +18,19 @@ The API for this application is available [go-chatgpt-api](https://github.com/li
 or [java-chatgpt-api](https://github.com/linweiyuan/java-chatgpt-api), you can build and deploy your own in supported
 countries, both of them can bypass Cloudflare v2 CAPTCHA in a special way.
 
+---
+
+Also support official API:
+
+- Chat completions
+
 **Please note: this is an unofficial application using unofficial APIs, maybe unavailable at any time.**
 
 ---
+
+![](https://linweiyuan.github.io/2023/02/25/ChatGPT-Swing/mode_switch.png)
+
+![](https://linweiyuan.github.io/2023/02/25/ChatGPT-Swing/check_usage.png)
 
 Screenshots:
 
