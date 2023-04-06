@@ -12,7 +12,6 @@ import com.linweiyuan.chatgptswing.util.CacheUtil
 import com.linweiyuan.chatgptswing.util.ConfigUtil
 import com.linweiyuan.chatgptswing.util.IdUtil
 import org.jsoup.Jsoup
-import javax.swing.SwingUtilities
 import javax.swing.SwingWorker
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -58,9 +57,6 @@ class GetConversationListWorker(
                 if (conversationId.isNotBlank()) {
                     val highlightedNode = conversationTreeRoot.getCurrentNode(conversationId)
                     mainFrame.conversationTree.selectionPath = TreePath(getPathToRoot(highlightedNode))
-                    SwingUtilities.invokeLater {
-                        GetConversationContentWorker(mainFrame, conversationId).execute()
-                    }
                 }
             }
         }
