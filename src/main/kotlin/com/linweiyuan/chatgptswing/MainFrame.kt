@@ -405,7 +405,7 @@ class MainFrame : JFrame(Constant.TITLE) {
                         return@addActionListener
                     }
 
-                    val apiKey = JOptionPane.showInputDialog("API Key", ConfigUtil.getAccessToken())
+                    val apiKey = JOptionPane.showInputDialog("API Key", ConfigUtil.getApiKey())
                     if (apiKey == null) {
                         "Please input api key".warn()
                         return@addActionListener
