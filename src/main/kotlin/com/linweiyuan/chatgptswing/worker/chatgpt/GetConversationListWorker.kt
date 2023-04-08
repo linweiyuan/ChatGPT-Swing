@@ -28,7 +28,7 @@ class GetConversationListWorker(
             val url = "${ConfigUtil.getServerUrl()}${String.format(Constant.URL_GET_CONVERSATION_LIST, 0, 100)}"
             val response = Jsoup.connect(url).preset().execute()
             if (response.statusCode() != Constant.HTTP_OK) {
-                response.showErrorMessage()
+                response.showErrorMessage(mainFrame)
                 return false
             }
 
@@ -40,7 +40,7 @@ class GetConversationListWorker(
 
             return true
         } catch (e: Exception) {
-            e.toString().warn()
+            e.toString().warn(mainFrame)
             return false
         }
     }

@@ -36,13 +36,13 @@ class FeedbackConversationWorker(
                 .preset()
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
-                response.showErrorMessage()
+                response.showErrorMessage(mainFrame)
                 return false
             }
 
             return true
         } catch (e: Exception) {
-            e.toString().warn()
+            e.toString().warn(mainFrame)
             return false
         }
     }
@@ -52,7 +52,7 @@ class FeedbackConversationWorker(
 
         val ok = get()
         if (ok) {
-            JOptionPane.showMessageDialog(null, "Done")
+            JOptionPane.showMessageDialog(mainFrame, "Done")
         }
     }
 }

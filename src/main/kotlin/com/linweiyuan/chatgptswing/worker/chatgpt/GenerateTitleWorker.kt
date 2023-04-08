@@ -41,7 +41,7 @@ class GenerateTitleWorker(
                 .preset()
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
-                response.showErrorMessage()
+                response.showErrorMessage(mainFrame)
                 return null
             }
 
@@ -57,7 +57,7 @@ class GenerateTitleWorker(
             conversationTreeRoot.add(node)
             return node
         } catch (e: Exception) {
-            e.toString().warn()
+            e.toString().warn(mainFrame)
             return null
         }
     }

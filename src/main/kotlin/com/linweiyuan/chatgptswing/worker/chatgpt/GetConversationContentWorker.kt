@@ -35,7 +35,7 @@ class GetConversationContentWorker(
                 "${ConfigUtil.getServerUrl()}${String.format(Constant.URL_GET_CONVERSATION_CONTENT, conversationId)}"
             val response = Jsoup.connect(url).preset().execute()
             if (response.statusCode() != Constant.HTTP_OK) {
-                response.showErrorMessage()
+                response.showErrorMessage(mainFrame)
                 return false
             }
 
@@ -49,7 +49,7 @@ class GetConversationContentWorker(
 
             return true
         } catch (e: Exception) {
-            e.toString().warn()
+            e.toString().warn(mainFrame)
             return false
         }
     }
@@ -72,7 +72,7 @@ class GetConversationContentWorker(
         chunks.forEach {
             val content = it.content.parts[0]
             if (content.isNotBlank()) {
-                if (it.author.role == Constant.ROLE_USER) {
+                if (it.author!!.role == Constant.ROLE_USER) {
                     // if start a new conversation, currentTreeNode is null
                     currentTreeNode?.add(DefaultMutableTreeNode(it))
                 }

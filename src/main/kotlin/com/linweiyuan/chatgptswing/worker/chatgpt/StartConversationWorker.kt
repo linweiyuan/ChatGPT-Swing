@@ -68,7 +68,7 @@ class StartConversationWorker(
                 .preset()
                 .execute()
             if (response.statusCode() != Constant.HTTP_OK) {
-                response.showErrorMessage()
+                response.showErrorMessage(mainFrame)
                 return false
             }
 
@@ -117,7 +117,7 @@ class StartConversationWorker(
 
             return true
         } catch (e: Exception) {
-            e.toString().warn()
+            e.toString().warn(mainFrame)
             return false
         }
     }

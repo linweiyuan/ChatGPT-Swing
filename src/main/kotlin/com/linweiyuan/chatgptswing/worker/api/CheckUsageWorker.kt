@@ -24,7 +24,7 @@ class CheckUsageWorker(
                 .text()
             JSON.parseObject(json, Usage::class.java)
         } catch (e: Exception) {
-            e.toString().warn()
+            e.toString().warn(mainFrame)
             null
         }
     }
@@ -35,7 +35,7 @@ class CheckUsageWorker(
         val usage = get()
         if (usage != null) {
             JOptionPane.showMessageDialog(
-                null,
+                mainFrame,
                 "Total Granted: ${usage.totalGranted}\n" +
                         "Total Used: ${usage.totalUsed}\n" +
                         "Total Available: ${usage.totalAvailable}"

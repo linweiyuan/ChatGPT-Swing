@@ -39,7 +39,7 @@ class MainFrame : JFrame(Constant.TITLE) {
         add(progressBar, BorderLayout.NORTH)
 
         val option = JOptionPane.showOptionDialog(
-            null,
+            this,
             Constant.CHOOSE_MODE_MESSAGE,
             Constant.CHOOSE_MODE_TITLE,
             JOptionPane.YES_NO_OPTION,
@@ -184,15 +184,15 @@ class MainFrame : JFrame(Constant.TITLE) {
 
                         add(JMenuItem(Constant.RENAME).apply {
                             addActionListener {
-                                val title = JOptionPane.showInputDialog("Rename to new title.")
+                                val title = JOptionPane.showInputDialog(this@MainFrame, "Rename to new title.")
                                 if (title.isNullOrBlank()) {
-                                    "Please input new title.".warn()
+                                    "Please input new title.".warn(this@MainFrame)
                                     return@addActionListener
                                 }
 
                                 val conversationId = IdUtil.getConversationId()
                                 if (conversationId.isBlank()) {
-                                    "This conversation does not support rename.".warn()
+                                    "This conversation does not support rename.".warn(this@MainFrame)
                                     return@addActionListener
                                 }
 
@@ -210,7 +210,10 @@ class MainFrame : JFrame(Constant.TITLE) {
                         add(JMenuItem(Constant.DELETE).apply {
                             addActionListener {
                                 val option =
-                                    JOptionPane.showConfirmDialog(null, "Do you want to delete this conversion?")
+                                    JOptionPane.showConfirmDialog(
+                                        this@MainFrame,
+                                        "Do you want to delete this conversion?"
+                                    )
                                 if (option != JOptionPane.OK_OPTION) {
                                     return@addActionListener
                                 }
@@ -237,7 +240,7 @@ class MainFrame : JFrame(Constant.TITLE) {
                         add(JMenuItem(Constant.FEEDBACK).apply {
                             addActionListener {
                                 val option = JOptionPane.showOptionDialog(
-                                    null,
+                                    this@MainFrame,
                                     "Choose a feedback.",
                                     Constant.FEEDBACK,
                                     JOptionPane.YES_NO_CANCEL_OPTION,
@@ -304,7 +307,7 @@ class MainFrame : JFrame(Constant.TITLE) {
 
             add(JButton(Constant.CLEAR).apply {
                 addActionListener {
-                    val option = JOptionPane.showConfirmDialog(null, "Do you want to clear all conversions?")
+                    val option = JOptionPane.showConfirmDialog(this@MainFrame, "Do you want to clear all conversions?")
                     if (option != JOptionPane.OK_OPTION) {
                         return@addActionListener
                     }
@@ -323,7 +326,7 @@ class MainFrame : JFrame(Constant.TITLE) {
         addActionListener {
             val content = contentField.text.trim()
             if (content.isBlank()) {
-                "Please input something.".warn()
+                "Please input something.".warn(this@MainFrame)
                 return@addActionListener
             }
 
@@ -393,21 +396,22 @@ class MainFrame : JFrame(Constant.TITLE) {
         add(JMenu(Constant.MORE).apply {
             add(JMenuItem(Constant.CONFIG).apply {
                 addActionListener {
-                    val serverUrl = JOptionPane.showInputDialog("Server URL", ConfigUtil.getServerUrl())
+                    val serverUrl = JOptionPane.showInputDialog(this@MainFrame, "Server URL", ConfigUtil.getServerUrl())
                     if (serverUrl == null) {
-                        "Please input server url".warn()
+                        "Please input server url".warn(this@MainFrame)
                         return@addActionListener
                     }
 
-                    val accessToken = JOptionPane.showInputDialog("Access Token", ConfigUtil.getAccessToken())
+                    val accessToken =
+                        JOptionPane.showInputDialog(this@MainFrame, "Access Token", ConfigUtil.getAccessToken())
                     if (accessToken == null) {
-                        "Please input access token".warn()
+                        "Please input access token".warn(this@MainFrame)
                         return@addActionListener
                     }
 
-                    val apiKey = JOptionPane.showInputDialog("API Key", ConfigUtil.getApiKey())
+                    val apiKey = JOptionPane.showInputDialog(this@MainFrame, "API Key", ConfigUtil.getApiKey())
                     if (apiKey == null) {
-                        "Please input api key".warn()
+                        "Please input api key".warn(this@MainFrame)
                         return@addActionListener
                     }
 
@@ -418,7 +422,7 @@ class MainFrame : JFrame(Constant.TITLE) {
             add(JMenuItem(Constant.ABOUT).apply {
                 addActionListener {
                     JOptionPane.showMessageDialog(
-                        null,
+                        this@MainFrame,
                         JLabel(Constant.ABOUT_INTO).apply {
                             addMouseListener(object : MouseAdapter() {
                                 override fun mouseClicked(e: MouseEvent) {

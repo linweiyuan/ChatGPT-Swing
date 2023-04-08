@@ -20,7 +20,7 @@ object ConfigUtil {
         } else {
             val configJson = configFile.readText()
             if (configJson.isBlank()) {
-                "Please set server url and access token in menu first at top left.".warn()
+                "Please set server url and access token in menu first at top left.".warn(null)
             } else {
                 val config = JSON.parseObject(configJson, Config::class.java)
                 serverUrl = config.serverUrl
