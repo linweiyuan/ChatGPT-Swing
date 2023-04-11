@@ -55,7 +55,8 @@ class StartConversationWorker(
                 ),
                 "model" to Constant.MODEL_CHATGPT,
                 "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
-                "conversation_id" to conversationId.ifBlank { null }
+                "conversation_id" to conversationId.ifBlank { null },
+                "continue_text" to "continue",
             )
 
             IdUtil.setParentMessageId("")
