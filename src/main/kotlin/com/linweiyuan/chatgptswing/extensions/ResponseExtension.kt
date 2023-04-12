@@ -5,5 +5,5 @@ import com.linweiyuan.chatgptswing.MainFrame
 import org.jsoup.Connection
 
 fun Connection.Response.showErrorMessage(mainFrame: MainFrame) {
-    JSON.parseObject(body()).getString("detail").warn(mainFrame)
+    JSON.parseObject(body()).getString("errorMessage").warn(mainFrame)
 }
