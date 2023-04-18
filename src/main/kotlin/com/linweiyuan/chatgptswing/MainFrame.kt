@@ -46,12 +46,12 @@ class MainFrame : JFrame(Constant.TITLE) {
             JOptionPane.INFORMATION_MESSAGE,
             null,
             arrayOf(
-                Constant.MODE_CHATGPT,
                 Constant.MODE_API,
+                Constant.MODE_CHATGPT,
             ),
             null,
         )
-        isChatGPT = if (option == JOptionPane.YES_OPTION) {
+        isChatGPT = if (option != JOptionPane.YES_OPTION) {
             initChatGPTFrame()
             true
         } else {
