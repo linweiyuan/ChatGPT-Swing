@@ -56,6 +56,8 @@ class StartConversationWorker(
                 "model" to Constant.MODEL_CHATGPT,
                 "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
                 "conversation_id" to conversationId.ifBlank { null },
+                "timezone_offset_min" to -480,
+                "variant_purpose" to "none",
                 "continue_text" to "continue",
             )
 
