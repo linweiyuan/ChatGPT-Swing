@@ -23,7 +23,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-class StartConversationWorker(
+class CreateConversationWorker(
     private val mainFrame: MainFrame,
     private val content: String,
 ) : SwingWorker<Boolean, String>() {
@@ -38,7 +38,7 @@ class StartConversationWorker(
 
     override fun doInBackground(): Boolean {
         try {
-            val startConversationRequest = mapOf(
+            val createConversationRequest = mapOf(
                 "action" to "next",
                 "messages" to listOf(
                     mapOf(
@@ -57,14 +57,13 @@ class StartConversationWorker(
                 "parent_message_id" to IdUtil.getParentMessageId().ifBlank { UUID.randomUUID().toString() },
                 "conversation_id" to conversationId.ifBlank { null },
                 "timezone_offset_min" to -480,
-                "variant_purpose" to "none",
-                "continue_text" to "continue",
+                "variant_purpose" to "none"
             )
 
             IdUtil.setParentMessageId("")
 
             val url = "${ConfigUtil.getServerUrl()}${Constant.URL_START_CONVERSATION}"
-            val requestBody = JSON.toJSONString(startConversationRequest)
+            val requestBody = JSON.toJSONString(createConversationRequest)
             val response = Jsoup.connect(url)
                 .method(Connection.Method.POST)
                 .requestBody(requestBody)
@@ -89,17 +88,20 @@ class StartConversationWorker(
             response.bodyStream().bufferedReader().use {
                 var line = it.readLine()
                 while (line != null) {
-                    if (line == "\n" || line == "\r\n" || line.startsWith("event") || line.startsWith("data: 20")) {
+                    if (line.isBlank()) {
+                        line = it.readLine()
                         continue
                     } else if (line.trim().endsWith("[DONE]")) {
                         break
                     }
 
-                    val conversationSSE = JSON.parseObject(line.substring(5), ConversationSSE::class.java)
+                    val conversationSSE = JSON.parseObject(line.substring(6), ConversationSSE::class.java)
                     if (conversationId.isBlank()) {
                         conversationId = conversationSSE.conversationId
                     }
-                    if (IdUtil.getParentMessageId().isBlank()) {
+                    if (IdUtil.getParentMessageId().isBlank()
+                        && Constant.ROLE_ASSISTANT == conversationSSE.message.author?.role
+                    ) {
                         IdUtil.setParentMessageId(conversationSSE.message.id)
                     }
                     val part = conversationSSE.message.content.parts[0]

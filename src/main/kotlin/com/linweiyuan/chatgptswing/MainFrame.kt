@@ -337,7 +337,7 @@ class MainFrame : JFrame(Constant.TITLE) {
 
             SwingUtilities.invokeLater {
                 if (isChatGPT) {
-                    StartConversationWorker(this@MainFrame, content).execute()
+                    CreateConversationWorker(this@MainFrame, content).execute()
                 } else {
                     ChatCompletionsWorker(this@MainFrame, content).execute()
                 }
