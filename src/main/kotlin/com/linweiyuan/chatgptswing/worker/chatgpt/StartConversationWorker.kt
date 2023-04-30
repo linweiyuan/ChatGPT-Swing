@@ -89,8 +89,7 @@ class StartConversationWorker(
             response.bodyStream().bufferedReader().use {
                 var line = it.readLine()
                 while (line != null) {
-                    if (line == "" || line.startsWith("event")) {
-                        line = it.readLine()
+                    if (line == "\n" || line == "\r\n" || line.startsWith("event") || line.startsWith("data: 20")) {
                         continue
                     } else if (line.trim().endsWith("[DONE]")) {
                         break
