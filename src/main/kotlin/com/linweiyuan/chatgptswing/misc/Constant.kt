@@ -10,14 +10,15 @@ object Constant {
 
     const val CONFIG_FILE_NAME = ".chatgpt-swing.json"
 
-    const val URL_START_CONVERSATION = "/conversation"
-    const val URL_GET_CONVERSATION_LIST = "/conversations?offset=%d&limit=%d"
-    const val URL_GET_CONVERSATION_CONTENT = "/conversation/%s"
-    const val URL_CLEAR_ALL_CONVERSATIONS = "/conversations"
-    const val URL_DELETE_CONVERSATION = "/conversation/%s"
-    const val URL_RENAME_TITLE = "/conversation/%s"
-    const val URL_GENERATE_TITLE = "/conversation/gen_title/%s"
-    const val URL_ADD_MESSAGE_FEEDBACK = "/conversation/message_feedback"
+    private const val URL_API_PREFIX_CHATGPT = "/chatgpt"
+    const val URL_START_CONVERSATION = "$URL_API_PREFIX_CHATGPT/conversation"
+    const val URL_GET_CONVERSATION_LIST = "$URL_API_PREFIX_CHATGPT/conversations?offset=%d&limit=%d"
+    const val URL_GET_CONVERSATION_CONTENT = "$URL_API_PREFIX_CHATGPT/conversation/%s"
+    const val URL_CLEAR_ALL_CONVERSATIONS = "$URL_API_PREFIX_CHATGPT/conversations"
+    const val URL_DELETE_CONVERSATION = "$URL_API_PREFIX_CHATGPT/conversation/%s"
+    const val URL_RENAME_TITLE = "$URL_API_PREFIX_CHATGPT/conversation/%s"
+    const val URL_GENERATE_TITLE = "$URL_API_PREFIX_CHATGPT/conversation/gen_title/%s"
+    const val URL_ADD_MESSAGE_FEEDBACK = "$URL_API_PREFIX_CHATGPT/conversation/message_feedback"
 
     const val MODEL_CHATGPT = "text-davinci-002-render-sha"
 
@@ -61,7 +62,8 @@ object Constant {
     const val MODE_CHATGPT = "ChatGPT"
     const val MODE_API = "API"
     private const val API_VERSION = "v1"
-    const val URL_API_CHAT_COMPLETIONS = "/$API_VERSION/chat/completions"
+    private const val URL_API_PREFIX_PLATFORM = "/platform"
+    const val URL_API_CHAT_COMPLETIONS = "$URL_API_PREFIX_PLATFORM/$API_VERSION/chat/completions"
     const val MODEL_API = "gpt-3.5-turbo"
-    const val URL_API_CHECK_USAGE = "/dashboard/billing/credit_grants"
+    const val URL_API_CHECK_USAGE = "$URL_API_PREFIX_PLATFORM/dashboard/billing/credit_grants"
 }
