@@ -10,7 +10,7 @@ object Constant {
 
     const val CONFIG_FILE_NAME = ".chatgpt-swing.json"
 
-    private const val URL_API_PREFIX_CHATGPT = "/chatgpt"
+    private const val URL_API_PREFIX_CHATGPT = "/chatgpt/backend-api"
     const val URL_START_CONVERSATION = "$URL_API_PREFIX_CHATGPT/conversation"
     const val URL_GET_CONVERSATION_LIST = "$URL_API_PREFIX_CHATGPT/conversations?offset=%d&limit=%d"
     const val URL_GET_CONVERSATION_CONTENT = "$URL_API_PREFIX_CHATGPT/conversation/%s"
